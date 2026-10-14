@@ -1,145 +1,108 @@
-# Cumulative Multi-Session Attendance Ledger & Student Course Analytics
+# Student Roster Management, Course Ledger Reset & Check-In Streamlining
 
-A comprehensive multi-session continuity system that accumulates attendance across consecutive class sessions for each course, maintains a permanent historical lecture archive, calculates cumulative attendance rates against the 75% exam eligibility standard, and provides students with a dedicated personal course attendance portal.
+Empower the Course Rep with full student lifecycle management (inline editing, removal, and addition), reset the Course Ledger to an empty initial state with custom course creation, and remove the GPS location blocker in favor of high-reliability 1-minute rolling passcodes and single-device hardware locking.
 
----
-
-### User Review & Critical Decisions
+## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> The following user preferences were confirmed during Phase 1 clarification:
-> - **Student Attendance Portal**: **Dedicated "My Attendance" tab** in the top navigation bar where any student can look up their personal course records, total lectures attended, and exam eligibility status.
-> - **Course Rep History & Ledger**: **Unified Course Ledger** inside the management dashboard featuring session date filters, cumulative student attendance matrices, and comprehensive semester exports.
-> - **Session Continuity Flow**: **Select course to append to existing lecture history** when starting a new class session, automatically linking the new session to the course's historical lecture count.
+> Based on your clarification, the following architectural choices have been locked in:
+> - **Attendance Verification**: Removed the GPS geolocation enforcement and distance verification. Check-in now relies on the **1-minute rolling passcode** displayed in class combined with **single-device hardware locking** (anti-proxy protection).
+> - **Course Ledger Reset**: Cleared all pre-existing courses from the database. The Course Ledger starts completely clean, equipped with an intuitive **"Add Course" modal** allowing the Class Rep to set up courses on demand.
+> - **Student Management**: Direct **Edit** and **Delete** action buttons on each student row in the Roster Manager, complete with an Edit Student modal (supporting name, JAMB, matric, level, department updates) and a safe delete confirmation.
 
 ---
 
-### 1. Overview & Core Concept
+## 1. Overview & Core Concept
 
-#### What It Delivers
-1. **Multi-Session Continuity & Accumulation**:
-   - Each lecture session belongs to a course (e.g., `CSC 401`, `CSC 415`, `MTH 301`).
-   - When a Course Rep launches Lecture 2, Lecture 3, or Lecture 4, the system automatically links it to the course timeline.
-   - Cumulative counts update in real-time: `Total Lectures Held`, `Times Attended`, and `Attendance Rate (%)`.
-
-2. **Accredited 75% Exam Eligibility Tracker**:
-   - Computes academic compliance according to standard Nigerian university senate regulations (e.g. minimum 75% lecture attendance required to sit for semester examinations).
-   - Students and course reps instantly see visual status tiers:
-     - **Eligible ($\ge 75\%$)**: Green compliance confirmation
-     - **At Risk ($50\% - 74\%$)**: Amber warning indicating danger of exam barring
-     - **Ineligible ($< 50\%$)**: Red alert requiring Course Rep / Lecturer intervention
-
-3. **Dedicated Student "My Attendance" Portal**:
-   - Accessible without an admin password directly from the top navigation.
-   - Students enter or search their JAMB Reg No or Matric No.
-   - Instantly renders a personal academic scorecard showing:
-     - All registered courses with attendance progress bars.
-     - Total lectures held vs. attended for each course.
-     - Chronological session timeline (Date, Hall, Lecturer, Verification Timestamp).
-
-4. **Historical Session Archive & Multi-Session CSV Ledger**:
-   - Course Rep can inspect past sessions individually or download a complete **Cumulative Attendance Matrix CSV** (all students in rows, all class dates in columns, plus total attendance and percentage).
+- **What It Does**:
+  1. **Class Rep Roster Control**: The Course Rep can now update student records (correct typos, edit JAMB or Matric numbers, change levels) or delete students directly from the Roster table, as well as add new students individually or in bulk via CSV.
+  2. **Clean Course Ledger**: Removes all seeded test courses. The system provides an empty slate with an interactive "+ Add Course" dialog for the Class Rep to configure course codes, titles, and venues.
+  3. **Hassle-Free Anti-Proxy Check-In**: Eliminates browser GPS errors, permission prompts, and coordinate drift. Students only need to enter their JAMB/Matric number and the 4-digit PIN currently projected on the classroom screen. The server guarantees anti-proxy integrity through single-device hardware/fingerprint locking and 1-minute code expiration.
+- **Target Audience**: Cybersecurity students and Course Reps in the Faculty of Computing & Digital Technology at Redeemer's University.
+- **Key Value**: 100% check-in reliability without false location blocks, paired with complete administrative autonomy for the Class Rep to manage students and courses.
 
 ---
 
-### 2. User Experience & Visual Design
+## 2. User Experience & Visual Design
 
-#### Public & Authenticated Navigation Bar
+### Key User Flows
+
 ```
-[ UniPass NG ] ─── [ Check-In ]  [ Hall Screen ]  [ Student Directory ]  [ My Attendance ] ─── [ Course Rep Hub / Login ]
+[Student Check-In]
+Student enters JAMB/Matric -> Live 4-digit PIN -> Instant Verification
+(No GPS permission dialogs, no out-of-bounds errors, immediate check-in)
+
+[Class Rep - Student Management]
+Roster Directory -> Each row has [Edit] and [Delete] buttons
+  ├── Click Edit: Modal pre-filled with student info -> Save Changes -> Instant table update
+  └── Click Delete: Confirmation prompt -> Remove student from database -> Notification toast
+
+[Class Rep - Course Ledger]
+Course Ledger Tab -> Empty State: "No courses configured yet" -> Click "+ Add Course"
+  └── Modal: Course Code, Course Title, Lecturer Name, Venue -> Create Course -> Ledger Matrix active
 ```
 
-- **Top Bar Tabs**:
-  - `Check-In`: Real-time mobile attendance entry for the active class.
-  - `Hall Screen`: Classroom projector rolling 60-second passcode display.
-  - `Student Directory`: Public searchable roster of accredited students.
-  - **`My Attendance` (NEW)**: Student-facing personal attendance history and course statistics lookup.
-  - `Course Rep Hub`: Privileged admin center (locked behind rep password `rep2024`).
-
-#### "My Attendance" Student View Flow
-1. **Search Bar**: Student inputs JAMB Reg No (`2024/104829AB`) or Matric No (`CSC/2020/001`) with quick-select suggestions.
-2. **Student Identity Header**: Displays student's Full Name, Matric No, Department, and overall attendance compliance rate.
-3. **Course Progress Cards**:
-   - Clean tabular cards for each course with:
-     - Course Code (`CSC 401`) & Title (`Distributed Computing`).
-     - Progress bar with tabular metric: `4 / 5 Lectures (80.0%)`.
-     - Senate Status: `Exam Eligible (>= 75%)`.
-4. **Interactive Session Log Expansion**:
-   - Clicking a course unfolds the detailed lecture ledger:
-     - `Lecture 1 · Sep 28 · 10:00 AM · Present`
-     - `Lecture 2 · Oct 05 · 10:15 AM · Present`
-     - `Lecture 3 · Oct 12 · 09:55 AM · Absent`
-
-#### Course Rep "Cumulative Ledger" View Flow
-1. **Course Selector**: Toggle between enrolled courses or view all.
-2. **Summary KPI Metrics**:
-   - `Total Lectures Conducted` (e.g., 5)
-   - `Average Class Attendance` (e.g., 88.4%)
-   - `Exam Eligible Students` (e.g., 28 / 30)
-3. **Cumulative Ledger Table**:
-   - Columns: Student Name, JAMB No, Matric No, [Lec 1, Lec 2, Lec 3, Lec 4, Lec 5], Total Attended, Attendance %, Senate Status.
-4. **Action Controls**:
-   - `Export Cumulative Matrix CSV`: Full spreadsheet formatted for academic board submission.
-   - `View Past Sessions`: Deep-dive into specific historical dates and device verification logs.
+### Visual Identity & Theme
+- **Theme**: High-contrast slate and emerald aesthetic (`#020617` / `#0F172A` / `#10B981`) fitting cybersecurity infrastructure.
+- **Roster Action Controls**: Compact icon buttons on each row:
+  - Edit: Emerald/slate button with edit pencil icon (`Lucide Edit3`).
+  - Delete: Rose/slate button with trash icon (`Lucide Trash2`).
+  - Add Course: Prominent emerald action button with plus icon (`Lucide Plus`).
+- **Typography & Data Grid**: Monospaced tabular numerals for student IDs, lecture counts, and passcodes (`font-mono tabular-nums`).
 
 ---
 
-### 3. Key Architectural Decisions & Data Model
+## 3. Key Product Decisions & Trade-Offs
+
+- **Decision 1: Removal of GPS Geofencing**
+  - *Chosen Approach*: Strip out the browser geolocation requirement, `userLat`/`userLng` submission, and distance calculation. Check-in directly validates the student JAMB against the master roster, the current/previous 1-minute rolling PIN, and device uniqueness.
+  - *Why*: Mobile browser permission popups, iframe sandboxes, and indoors GPS multipath interference caused legitimate students in the hall to be blocked. 1-minute rolling PINs visible only on the physical hall projector already provide strong physical presence assurance.
+  - *Alternative Considered*: Retaining GPS as optional; rejected because confusing location status cards cluttered the student view.
+- **Decision 2: Student Mutation Endpoints**
+  - *Chosen Approach*: Add `PUT /api/students/:jamb` (Edit student) and `DELETE /api/students/:jamb` (Delete student) protected by Course Rep authentication (`requireAdminAuth`).
+  - *Why*: Allows instantaneous roster corrections without needing full database resets.
+- **Decision 3: Course Creation & Ledger Empty State**
+  - *Chosen Approach*: Provide `POST /api/courses` and `DELETE /api/courses/:courseId` endpoints. When no courses exist, display a clean empty state with a 1-click "Add Course" trigger.
+
+---
+
+## 4. Technical Architecture & Data Strategy
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                          Data Architecture                             │
+│                        RUN CyberPass Frontend                          │
+│                                                                        │
+│  ┌───────────────────────┐  ┌────────────────────┐  ┌───────────────┐ │
+│  │   Student Check-In    │  │   Roster Manager   │  │ Course Ledger │ │
+│  │ (JAMB + PIN + Device) │  │  (Add/Edit/Delete) │  │  (Add/Manage) │ │
+│  └───────────┬───────────┘  └─────────┬──────────┘  └───────┬───────┘ │
+└──────────────┼────────────────────────┼─────────────────────┼─────────┘
+               │                        │                     │
+               ▼                        ▼                     ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Express Backend API                             │
+│                                                                        │
+│  • POST /api/check-in             (Passcode + Single-Device Guard)     │
+│  • GET/POST/PUT/DELETE /api/students                                   │
+│  • GET/POST/DELETE /api/courses   (Empty initial state + Add Course)   │
+│  • GET /api/courses/:id/ledger    (Live attendance matrix)             │
+│                                                                        │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ In-Memory Data Store: masterStudents, masterCourses, records     │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────────────────┘
-                                    │
-           ┌────────────────────────┴────────────────────────┐
-           ▼                                                 ▼
-┌───────────────────────┐                         ┌───────────────────────┐
-│     Course Entity     │                         │  Attendance Session   │
-├───────────────────────┤                         ├───────────────────────┤
-│ id: 'course-csc401'   │                         │ id: 'session-101'     │
-│ code: 'CSC 401'       │◄────────────────────────┤ courseId: 'csc401'    │
-│ title: 'Distributed...'│       (1 to Many)       │ lectureNumber: 3      │
-│ lecturer: 'Dr. Bab...'│                         │ status: 'completed'   │
-└───────────────────────┘                         └───────────┬───────────┘
-                                                              │
-                                                              ▼
-                                                  ┌───────────────────────┐
-                                                  │   Attendance Record   │
-                                                  ├───────────────────────┤
-                                                  │ sessionId: 'sess-101' │
-                                                  │ jambRegNo: '2024/...' │
-                                                  │ timestamp: 171...     │
-                                                  │ deviceId: 'dev_...'   │
-                                                  └───────────────────────┘
 ```
 
-#### New API Endpoints
-1. `GET /api/courses`: List all registered courses with session counts and lecture history.
-2. `GET /api/courses/:courseId/ledger`: Cumulative attendance ledger calculating total lectures, student attendance counts, percentages, and exam eligibility for that course.
-3. `GET /api/student/stats/:jambOrMatric`: Public lookup endpoint returning a student's full attendance history across all courses, session-by-session status, and exam qualifications.
-4. `GET /api/courses/:courseId/export-matrix`: Downloads the complete multi-session attendance matrix CSV.
-5. `POST /api/session/start`: Enhanced to accept `courseId` or existing course selection, auto-incrementing the lecture number for that course.
+### API Handlers to Update/Add
+1. `PUT /api/students/:jamb`: Updates student full name, matric number, level, and department.
+2. `DELETE /api/students/:jamb`: Removes the student from `masterStudents` and clears associated device locks.
+3. `POST /api/courses`: Creates a new course and adds it to `masterCourses`.
+4. `DELETE /api/courses/:courseId`: Deletes a course from the ledger.
+5. `POST /api/check-in`: Remove `userLat`, `userLng`, and Haversine distance verification; streamline passcode + single-device validation.
 
----
-
-### 4. Implementation Steps
-
-1. **Server Architecture (`server.ts`)**:
-   - Pre-populate realistic multi-session lecture history for courses (`CSC 401`, `CSC 415`, `MTH 301`) so historical continuity is immediately visible.
-   - Implement cumulative aggregation algorithms computing student attendance rates and exam compliance flags.
-   - Add `/api/student/stats/:jambOrMatric` and `/api/courses/:courseId/ledger` endpoints.
-   - Implement cumulative CSV export supporting multi-date matrix generation.
-
-2. **Frontend Service (`src/services/api.ts`) & Types (`src/types/attendance.ts`)**:
-   - Define `Course`, `CourseLedger`, `StudentCourseStats`, and `SessionHistoryItem` interfaces.
-   - Add API client methods for fetching course ledgers, student personal stats, and matrix exports.
-
-3. **Student "My Attendance" Component (`src/components/StudentAttendanceStats.tsx`)**:
-   - Build responsive student lookup interface with search, summary cards, and collapsible lecture-by-lecture audit history.
-
-4. **Course Rep Cumulative Ledger (`src/components/CourseLedgerView.tsx` / `AdminDashboard.tsx`)**:
-   - Add unified course ledger view to the admin dashboard with lecture timelines, matrix tables, and 1-click cumulative CSV export.
-
-5. **Navigation & Session Modal Integration (`src/components/Navbar.tsx`, `src/App.tsx`, `AdminDashboard.tsx`)**:
-   - Add the "My Attendance" tab to top navigation.
-   - Update "Start Session" modal to allow selecting an existing course from a dropdown or typing a new course code.
+### Component Updates
+1. `src/components/StudentPortal.tsx`: Remove all GPS acquisition hooks, location status indicators, and permission buttons. Deliver a clean, rapid check-in form.
+2. `src/components/RosterManager.tsx`: Add `Edit` and `Delete` action buttons to each student row, with an Edit Student modal and a Delete confirmation modal.
+3. `src/components/CourseLedgerView.tsx`: Support an empty course state with a dedicated "+ Add Course" modal.
+4. `src/components/AdminDashboard.tsx`: Add course deletion/creation controls and remove GPS coordinate capturing.
+5. `src/services/api.ts` & `server.ts`: Wire new student and course CRUD routes and clear initial course list.

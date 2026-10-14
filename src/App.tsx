@@ -7,6 +7,8 @@ import { RosterManager } from './components/RosterManager.tsx';
 import { StudentAttendanceStats } from './components/StudentAttendanceStats.tsx';
 import { AdminLoginModal } from './components/AdminLoginModal.tsx';
 import { SecurityModal } from './components/SecurityModal.tsx';
+import { OnboardingModal } from './components/OnboardingModal.tsx';
+import { OfflineIndicator } from './components/OfflineIndicator.tsx';
 import { AttendanceApiService } from './services/api.ts';
 import { SessionPublicInfo } from './types/attendance.ts';
 
@@ -16,12 +18,21 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState<boolean>(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [selectedJambForCheckIn, setSelectedJambForCheckIn] = useState<string>('');
-  const [selectedJambForStats, setSelectedJambForStats] = useState<string>('2024/104829AB');
+  const [selectedJambForStats, setSelectedJambForStats] = useState<string>('202660245646HJ');
 
-  // Check existing session auth on initial mount
+  // Check existing session auth and first-visit onboarding on initial mount
   useEffect(() => {
     setIsAdminAuthenticated(AttendanceApiService.isAdminAuthenticated());
+    try {
+      const seen = localStorage.getItem('run_cyberpass_onboarding_seen');
+      if (!seen) {
+        setIsOnboardingOpen(true);
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   // Poll public session state for active indicator
@@ -99,8 +110,12 @@ export default function App() {
           onOpenAdminLogin={() => setIsLoginModalOpen(true)}
           onAdminLogout={handleAdminLogout}
           onOpenSecurityModal={() => setIsSecurityModalOpen(true)}
+          onOpenOnboarding={() => setIsOnboardingOpen(true)}
         />
       )}
+
+      {/* Network Offline Alert */}
+      <OfflineIndicator />
 
       {/* Main Content Router */}
       <main className="flex-1">
@@ -167,6 +182,12 @@ export default function App() {
       <SecurityModal
         isOpen={isSecurityModalOpen}
         onClose={() => setIsSecurityModalOpen(false)}
+      />
+
+      {/* First-Visit Onboarding & Student Guide Modal */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
       />
     </div>
   );

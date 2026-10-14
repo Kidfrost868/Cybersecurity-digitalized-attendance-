@@ -21,6 +21,10 @@ import {
   BookOpen,
   Calendar,
   Layers,
+  MapPin,
+  Navigation,
+  AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 import { AttendanceApiService } from '../services/api.ts';
 import {
@@ -46,13 +50,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLockAdmin,
 }) => {
   // Session Configuration Form State
-  const [selectedCourseId, setSelectedCourseId] = useState('course-csc401');
-  const [courseCode, setCourseCode] = useState('CSC 401');
-  const [courseTitle, setCourseTitle] = useState('Distributed Computing & Cloud Architecture');
-  const [hallLocation, setHallLocation] = useState('ETF Lecture Theatre 1');
+  const [selectedCourseId, setSelectedCourseId] = useState('course-cyb201');
+  const [courseCode, setCourseCode] = useState('CYB 201');
+  const [courseTitle, setCourseTitle] = useState('Introduction to Cybersecurity & Information Assurance');
+  const [hallLocation, setHallLocation] = useState('Faculty of Computing & Digital Tech Lab 1');
   const [lecturerName, setLecturerName] = useState('Dr. E. O. Babalola');
   const [durationMinutes, setDurationMinutes] = useState(5);
   const [passcodeIntervalSeconds, setPasscodeIntervalSeconds] = useState(60); // 1 minute default
+
+  // Dynamic GPS Geofencing Coordinates (60m radius)
+  const [adminLat, setAdminLat] = useState<number>(7.6983);
+  const [adminLng, setAdminLng] = useState<number>(4.4239);
+  const [geofenceRadius, setGeofenceRadius] = useState<number>(60);
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [isCapturingGps, setIsCapturingGps] = useState<boolean>(false);
+  const [gpsStatusMsg, setGpsStatusMsg] = useState<string>("Redeemer's University Ede Campus (7.6983° N, 4.4239° E)");
 
   // Active Session & Live Data
   const [activeSession, setActiveSession] = useState<AttendanceSession | null>(null);
@@ -65,10 +77,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
+  // In-App Confirmation Modal for Ending Session (replaces blocked window.confirm)
+  const [showStopConfirmModal, setShowStopConfirmModal] = useState<boolean>(false);
+
   // Unlock Modal State
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
   const [overrideDeviceId, setOverrideDeviceId] = useState('');
   const [overrideReason, setOverrideReason] = useState('Student verified physically in hall');
+
+  // Trigger GPS acquisition from Course Rep device
+  const captureCurrentGps = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGpsStatusMsg('Geolocation unavailable in this browser. Using RUN Campus baseline.');
+      return;
+    }
+    setIsCapturingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setAdminLat(pos.coords.latitude);
+        setAdminLng(pos.coords.longitude);
+        setGpsAccuracy(Math.round(pos.coords.accuracy));
+        setGpsStatusMsg(`Live Hall GPS Locked: ${pos.coords.latitude.toFixed(5)}° N, ${pos.coords.longitude.toFixed(5)}° E (±${Math.round(pos.coords.accuracy)}m)`);
+        setIsCapturingGps(false);
+      },
+      () => {
+        setIsCapturingGps(false);
+        setGpsStatusMsg("Location permission dismissed. Defaulting to RUN Cyber Range Lab GPS (7.6983° N, 4.4239° E).");
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
 
   // Load and poll data
   const refreshData = async () => {
@@ -110,7 +148,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setCourseCode('');
       setCourseTitle('');
       setLecturerName('');
-      setHallLocation('ETF Lecture Theatre 1');
+      setHallLocation("Redeemer's Cyber Range Lab");
       return;
     }
 
@@ -148,6 +186,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         lecturerName,
         durationMinutes,
         passcodeIntervalSeconds,
+        latitude: adminLat,
+        longitude: adminLng,
+        geofenceRadius,
       });
       setActiveSession(session);
       setActionSuccess(`Attendance session launched for ${courseCode} (Lecture #${session.lectureNumber || 1})!`);
@@ -161,16 +202,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Stop Session Handler
-  const handleStopSession = async () => {
-    if (!confirm('Are you sure you want to end this attendance session early? Records will be permanently archived.')) return;
+  // Stop Session Handler (In-app confirmed execution)
+  const executeStopSession = async () => {
     setIsLoading(true);
     try {
       await AttendanceApiService.stopSession();
       setActiveSession(null);
+      setShowStopConfirmModal(false);
       setActionSuccess('Session concluded. Records permanently archived into Course Ledger.');
       if (onRefreshSessionState) onRefreshSessionState();
       refreshData();
+      setTimeout(() => setActionSuccess(null), 4000);
     } catch {
       // Error
     } finally {
@@ -404,8 +446,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <span>Projector Mode</span>
               </button>
               <button
-                onClick={handleStopSession}
-                className="w-full py-2 bg-slate-800 hover:bg-red-950/80 hover:text-red-300 text-slate-400 rounded-xl text-xs font-medium border border-slate-800 transition-colors cursor-pointer"
+                onClick={() => setShowStopConfirmModal(true)}
+                className="w-full py-2 bg-slate-800 hover:bg-red-950/80 hover:text-red-300 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 hover:border-red-500/50 transition-colors cursor-pointer"
               >
                 End Session & Archive
               </button>
@@ -720,7 +762,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   type="text"
                   value={courseCode}
                   onChange={(e) => setCourseCode(e.target.value)}
-                  placeholder="e.g. CSC 401"
+                  placeholder="e.g. CYB 401"
                   required
                   className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-sm focus:border-emerald-500"
                 />
@@ -781,6 +823,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:border-emerald-500"
                 />
               </div>
+
+              {/* Attendance Verification & Security Policy Card */}
+              <div className="sm:col-span-2 space-y-3 bg-slate-900/80 p-4 rounded-xl border border-slate-700/80">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Attendance Verification Guard Active</h4>
+                    <p className="text-[11px] text-slate-400">1-Minute Live Rolling Passcode & Single-Device Anti-Proxy Lock</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 font-mono block">PASSCODE POLICY</span>
+                    <span className="font-mono text-emerald-400 font-semibold">1-Minute Dynamic Rolling PIN</span>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Projected in class so only students physically present can view it.</p>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 font-mono block">DEVICE SECURITY</span>
+                    <span className="font-mono text-white font-semibold">Hardware Fingerprint Locked</span>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Strictly blocks a single smartphone from checking in for classmates.</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="pt-2 flex items-center gap-3">
@@ -805,6 +873,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         )}
 
       </div>
+
+      {/* End Session In-App Confirmation Modal (solves iframe window.confirm blocking) */}
+      {showStopConfirmModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">End Attendance Session?</h3>
+                <p className="text-xs text-slate-400">
+                  {activeSession?.courseCode} · Lecture #{activeSession?.lectureNumber || 1}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+              Are you sure you want to conclude this lecture attendance? The 4-digit PIN will immediately deactivate and all verified check-ins will be permanently archived into the Course Ledger.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowStopConfirmModal(false)}
+                disabled={isLoading}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+              >
+                Continue Session
+              </button>
+              <button
+                type="button"
+                onClick={executeStopSession}
+                disabled={isLoading}
+                className="px-5 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-lg shadow-red-950"
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+                <span>{isLoading ? 'Concluding...' : 'Yes, End Session & Archive'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Override Device Exception Modal */}
       {overrideModalOpen && (

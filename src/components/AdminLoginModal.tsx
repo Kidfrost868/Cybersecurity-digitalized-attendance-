@@ -44,10 +44,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     }
   };
 
-  const handleQuickFill = () => {
-    setPassword('rep2024');
-    setError(null);
-  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -112,17 +108,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </div>
           </div>
 
-          {/* Quick Demo Hint */}
-          <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between text-[11px] text-slate-400">
-            <span>Default passcode: <strong className="text-emerald-400 font-mono">rep2024</strong></span>
-            <button
-              type="button"
-              onClick={handleQuickFill}
-              className="text-xs text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer"
-            >
-              Fill Demo
-            </button>
-          </div>
 
           <div className="pt-1 flex gap-2.5">
             <button

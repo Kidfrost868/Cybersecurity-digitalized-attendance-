@@ -110,10 +110,10 @@ export const ProjectorView: React.FC<ProjectorViewProps> = ({
               Lecture Hall Display · Projector Mode
             </span>
             <h1 className="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
-              <span>{session?.courseCode || 'CSC 401'}</span>
+              <span>{session?.courseCode || 'CYB 201'}</span>
               <span className="text-slate-500 font-normal">·</span>
               <span className="text-slate-400 font-normal text-sm sm:text-base truncate max-w-xs sm:max-w-md">
-                {session?.courseTitle || 'Distributed Computing'}
+                {session?.courseTitle || 'Introduction to Cybersecurity & Information Assurance'}
               </span>
             </h1>
           </div>

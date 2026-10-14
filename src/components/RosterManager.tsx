@@ -13,6 +13,10 @@ import {
   Lock,
   Copy,
   ArrowRight,
+  Edit3,
+  Trash2,
+  X,
+  Save,
 } from 'lucide-react';
 import { AttendanceApiService } from '../services/api.ts';
 import { Student } from '../types/attendance.ts';
@@ -41,8 +45,21 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
   const [newJamb, setNewJamb] = useState('');
   const [newName, setNewName] = useState('');
   const [newMatric, setNewMatric] = useState('');
-  const [newDepartment, setNewDepartment] = useState('Computer Science');
-  const [newLevel, setNewLevel] = useState('400L');
+  const [newDepartment, setNewDepartment] = useState('Cybersecurity');
+  const [newLevel, setNewLevel] = useState('100L');
+
+  // Edit Student State
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [editFullName, setEditFullName] = useState('');
+  const [editJamb, setEditJamb] = useState('');
+  const [editMatric, setEditMatric] = useState('');
+  const [editDepartment, setEditDepartment] = useState('');
+  const [editLevel, setEditLevel] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Delete Student State
+  const [deletingStudent, setDeletingStudent] = useState<Student | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // CSV Drag & Drop State
   const [csvContent, setCsvContent] = useState('');
@@ -94,8 +111,8 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
       await AttendanceApiService.addStudent({
         jambRegNo: newJamb.trim().toUpperCase(),
         fullName: newName.trim(),
-        matricNo: newMatric.trim().toUpperCase() || `CSC/${Math.floor(1000 + Math.random() * 9000)}`,
-        department: newDepartment.trim(),
+        matricNo: newMatric.trim().toUpperCase() || `RUN/CYB/2021/${Math.floor(100 + Math.random() * 900)}`,
+        department: newDepartment.trim() || 'Cybersecurity',
         level: newLevel.trim(),
       });
       setNotification(`Added ${newName.trim()} to accredited roster.`);
@@ -107,6 +124,76 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
       setTimeout(() => setNotification(null), 3000);
     } catch {
       // Error
+    }
+  };
+
+  const handleStartEdit = (student: Student) => {
+    if (!isAdminAuthenticated) {
+      onRequireAdminAuth();
+      return;
+    }
+    setEditingStudent(student);
+    setEditFullName(student.fullName);
+    setEditJamb(student.jambRegNo);
+    setEditMatric(student.matricNo);
+    setEditDepartment(student.department);
+    setEditLevel(student.level);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    setIsUpdating(true);
+    try {
+      const res = await AttendanceApiService.updateStudent(editingStudent.jambRegNo, {
+        fullName: editFullName.trim(),
+        jambRegNo: editJamb.trim().toUpperCase(),
+        matricNo: editMatric.trim().toUpperCase(),
+        department: editDepartment.trim(),
+        level: editLevel.trim(),
+      });
+      if (res.success && res.student) {
+        setStudents((prev) =>
+          prev.map((s) => (s.jambRegNo === editingStudent.jambRegNo ? res.student! : s))
+        );
+        setNotification(`Student "${res.student.fullName}" updated successfully.`);
+        setTimeout(() => setNotification(null), 3000);
+        setEditingStudent(null);
+      } else {
+        alert(res.error || 'Failed to update student');
+      }
+    } catch {
+      alert('Network error updating student');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleStartDelete = (student: Student) => {
+    if (!isAdminAuthenticated) {
+      onRequireAdminAuth();
+      return;
+    }
+    setDeletingStudent(student);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingStudent) return;
+    setIsDeleting(true);
+    try {
+      const res = await AttendanceApiService.deleteStudent(deletingStudent.jambRegNo);
+      if (res.success) {
+        setStudents((prev) => prev.filter((s) => s.jambRegNo !== deletingStudent.jambRegNo));
+        setNotification(`Student "${deletingStudent.fullName}" removed from roster.`);
+        setTimeout(() => setNotification(null), 3000);
+        setDeletingStudent(null);
+      } else {
+        alert(res.error || 'Failed to remove student');
+      }
+    } catch {
+      alert('Network error removing student');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -168,12 +255,12 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
 
   // Download Sample Template CSV
   const handleDownloadSampleCsv = () => {
-    const template = 'JAMB Reg No,Student Full Name,Matric No,Department,Level\n2024/991122AA,"Chisom Daniel Okafor",CSC/2020/099,Computer Science,400L\n2024/991133BB,"Zainab Ahmed Shehu",CSC/2020/100,Computer Science,400L\n';
+    const template = 'JAMB Reg No,Student Full Name,Matric No,Department,Level\n2024/991122AA,"Chisom Daniel Okafor",RUN/CYB/2021/099,Cybersecurity,400L\n2024/991133BB,"Zainab Ahmed Shehu",RUN/CYB/2021/100,Cybersecurity,400L\n';
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'UniPass_Class_Roster_Template.csv';
+    a.download = 'RUN_CyberPass_Roster_Template.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -332,20 +419,38 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
                         {s.level}
                       </td>
                       <td className="py-3 px-3 text-right whitespace-nowrap">
-                        {onSelectStudentForCheckIn ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Edit Student Button */}
                           <button
                             type="button"
-                            onClick={() => onSelectStudentForCheckIn(s.jambRegNo)}
-                            className="text-[11px] px-2.5 py-1 rounded bg-slate-900 hover:bg-emerald-600 hover:text-white text-emerald-400 border border-slate-700 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            onClick={() => handleStartEdit(s)}
+                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-emerald-950 text-slate-400 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/40 transition-colors cursor-pointer"
+                            title={`Edit ${s.fullName}`}
                           >
-                            <span>Use to Check In</span>
-                            <ArrowRight className="w-3 h-3" />
+                            <Edit3 className="w-3.5 h-3.5" />
                           </button>
-                        ) : (
-                          <span className="text-[10px] px-2 py-0.5 rounded font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                            Accredited
-                          </span>
-                        )}
+
+                          {/* Delete Student Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleStartDelete(s)}
+                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-500/40 transition-colors cursor-pointer"
+                            title={`Remove ${s.fullName}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {onSelectStudentForCheckIn && (
+                            <button
+                              type="button"
+                              onClick={() => onSelectStudentForCheckIn(s.jambRegNo)}
+                              className="text-[11px] px-2.5 py-1 rounded bg-slate-900 hover:bg-emerald-600 hover:text-white text-emerald-400 border border-slate-700 transition-colors inline-flex items-center gap-1 cursor-pointer ml-1"
+                            >
+                              <span>Check In</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -421,7 +526,7 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
                   type="text"
                   value={newMatric}
                   onChange={(e) => setNewMatric(e.target.value.toUpperCase())}
-                  placeholder="e.g. CSC/2020/001"
+                  placeholder="e.g. RUN/CYB/2021/001"
                   className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-emerald-500 uppercase"
                 />
               </div>
@@ -551,6 +656,159 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
                 type="button"
                 onClick={() => setIsUploadModalOpen(false)}
                 className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT STUDENT (Protected) */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleSaveEdit}
+            className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in fade-in duration-150"
+          >
+            <div className="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-800">
+              <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Edit3 className="w-4 h-4 text-emerald-400" />
+                Edit Student Information
+              </span>
+              <button
+                type="button"
+                onClick={() => setEditingStudent(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                value={editFullName}
+                onChange={(e) => setEditFullName(e.target.value)}
+                placeholder="e.g. Asuelime Mcchris"
+                required
+                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">
+                JAMB Registration Number *
+              </label>
+              <input
+                type="text"
+                value={editJamb}
+                onChange={(e) => setEditJamb(e.target.value.toUpperCase())}
+                placeholder="e.g. 202660245646HJ"
+                required
+                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-emerald-500 uppercase"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">
+                Matric Number
+              </label>
+              <input
+                type="text"
+                value={editMatric}
+                onChange={(e) => setEditMatric(e.target.value.toUpperCase())}
+                placeholder="e.g. RUN/CYB/25/18825"
+                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-emerald-500 uppercase"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">
+                  Department
+                </label>
+                <input
+                  type="text"
+                  value={editDepartment}
+                  onChange={(e) => setEditDepartment(e.target.value)}
+                  placeholder="e.g. Cybersecurity"
+                  className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">
+                  Level
+                </label>
+                <select
+                  value={editLevel}
+                  onChange={(e) => setEditLevel(e.target.value)}
+                  className="w-full h-9 px-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+                >
+                  <option value="100L">100 Level</option>
+                  <option value="200L">200 Level</option>
+                  <option value="300L">300 Level</option>
+                  <option value="400L">400 Level</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="pt-2 flex gap-2.5">
+              <button
+                type="submit"
+                disabled={isUpdating}
+                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{isUpdating ? 'Saving...' : 'Save Changes'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingStudent(null)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: DELETE STUDENT CONFIRMATION (Protected) */}
+      {deletingStudent && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in duration-150">
+            <div className="flex items-center gap-2.5 text-rose-400">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              <h3 className="font-bold text-white text-sm">Remove Student from Roster?</h3>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Are you sure you want to remove <strong className="text-white">{deletingStudent.fullName}</strong> ({deletingStudent.jambRegNo}) from the accredited course roster?
+            </p>
+
+            <div className="p-3 bg-rose-950/30 border border-rose-500/30 rounded-xl text-[11px] text-rose-300">
+              This student will no longer be able to check in until re-enrolled by the Course Rep.
+            </div>
+
+            <div className="pt-2 flex gap-2.5">
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? 'Removing...' : 'Yes, Remove Student'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeletingStudent(null)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
               >
                 Cancel
               </button>

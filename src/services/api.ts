@@ -133,11 +133,11 @@ export class AttendanceApiService {
       const intervalMs = 60 * 1000;
       session = {
         id: sessionId,
-        courseCode: 'CSC 401',
-        courseTitle: 'Distributed Computing & Cloud Architecture',
+        courseCode: 'CYB 401',
+        courseTitle: 'Advanced Penetration Testing & Ethical Hacking',
         lecturerName: 'Dr. E. O. Babalola',
         courseRepName: 'David Adeleke (Class Rep)',
-        hallLocation: 'ETF Lecture Theatre 1',
+        hallLocation: "Redeemer's Cyber Range Lab",
         startTime: now,
         durationMs,
         expiresAt: now + durationMs,
@@ -180,6 +180,8 @@ export class AttendanceApiService {
     deviceId: string;
     hardwareHash?: string;
     deviceInfo?: string;
+    userLat?: number;
+    userLng?: number;
   }): Promise<CheckInResponse> {
     return this.submitCheckIn({
       ...params,
@@ -194,6 +196,8 @@ export class AttendanceApiService {
     deviceId: string;
     hardwareHash?: string;
     deviceInfo?: string;
+    userLat?: number;
+    userLng?: number;
   }): Promise<CheckInResponse> {
     try {
       const res = await fetch('/api/check-in', {
@@ -373,6 +377,9 @@ export class AttendanceApiService {
     courseRepName?: string;
     durationMinutes?: number;
     passcodeIntervalSeconds?: number;
+    latitude?: number;
+    longitude?: number;
+    geofenceRadius?: number;
   }): Promise<AttendanceSession> {
     try {
       const res = await fetch('/api/session/start', {
@@ -398,11 +405,11 @@ export class AttendanceApiService {
       id: sessionId,
       courseId: data.courseId,
       lectureNumber: 1,
-      courseCode: data.courseCode || 'CSC 401',
-      courseTitle: data.courseTitle || 'Distributed Computing',
+      courseCode: data.courseCode || 'CYB 401',
+      courseTitle: data.courseTitle || 'Advanced Penetration Testing & Ethical Hacking',
       lecturerName: data.lecturerName || 'Dr. E. O. Babalola',
       courseRepName: data.courseRepName || 'David Adeleke',
-      hallLocation: data.hallLocation || 'ETF Lecture Theatre 1',
+      hallLocation: data.hallLocation || "Redeemer's Cyber Range Lab",
       startTime: now,
       durationMs,
       expiresAt: now + durationMs,
@@ -412,6 +419,9 @@ export class AttendanceApiService {
       passcodeRotatedAt: now,
       passcodeExpiresAt: now + intervalMs,
       passcodeIntervalMs: intervalMs,
+      latitude: data.latitude || 7.6983,
+      longitude: data.longitude || 4.4239,
+      geofenceRadius: data.geofenceRadius || 60,
     };
 
     setStored('active_session', newSession);
@@ -425,7 +435,10 @@ export class AttendanceApiService {
         method: 'POST',
         headers: this.getAdminAuthHeaders(),
       });
-      if (res.ok) return true;
+      if (res.ok) {
+        setStored('active_session', null);
+        return true;
+      }
     } catch {
       // Fallback
     }
@@ -433,7 +446,7 @@ export class AttendanceApiService {
     const session = getStored<AttendanceSession | null>('active_session', null);
     if (session) {
       session.status = 'completed';
-      setStored('active_session', session);
+      setStored('active_session', null);
     }
     return true;
   }
@@ -452,44 +465,44 @@ export class AttendanceApiService {
     return {
       courses: [
         {
-          id: 'course-csc401',
-          code: 'CSC 401',
-          title: 'Distributed Computing & Cloud Architecture',
+          id: 'course-cyb201',
+          code: 'CYB 201',
+          title: 'Introduction to Cybersecurity & Information Assurance',
           lecturerName: 'Dr. E. O. Babalola',
-          hallLocation: 'ETF Lecture Theatre 1',
-          department: 'Computer Science',
-          totalLectures: 5,
-          createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
+          hallLocation: 'Faculty of Computing & Digital Tech Lab 1',
+          department: 'Cybersecurity',
+          totalLectures: 1,
+          createdAt: Date.now(),
         },
         {
-          id: 'course-csc415',
-          code: 'CSC 415',
-          title: 'Cryptography & Network Security',
+          id: 'course-cyb202',
+          code: 'CYB 202',
+          title: 'Fundamentals of Cryptography & Network Defense',
           lecturerName: 'Prof. O. K. Adeleke',
-          hallLocation: 'Computer Lab 2B',
-          department: 'Computer Science',
-          totalLectures: 3,
-          createdAt: Date.now() - 25 * 24 * 60 * 60 * 1000,
+          hallLocation: 'FCDT Lecture Auditorium',
+          department: 'Cybersecurity',
+          totalLectures: 0,
+          createdAt: Date.now(),
         },
         {
-          id: 'course-mth301',
-          code: 'MTH 301',
-          title: 'Numerical Analysis & Differential Equations',
+          id: 'course-cyb301',
+          code: 'CYB 301',
+          title: 'Digital Forensics, Threat Intelligence & Incident Response',
           lecturerName: 'Dr. Mrs. A. Funmilayo',
-          hallLocation: 'Faculty Auditorium B',
-          department: 'Computer Science & Maths',
-          totalLectures: 4,
-          createdAt: Date.now() - 28 * 24 * 60 * 60 * 1000,
+          hallLocation: "Redeemer's Cyber Range Lab",
+          department: 'Cybersecurity',
+          totalLectures: 0,
+          createdAt: Date.now(),
         },
         {
-          id: 'course-csc421',
-          code: 'CSC 421',
-          title: 'Software Engineering & Agile Methodologies',
+          id: 'course-cyb401',
+          code: 'CYB 401',
+          title: 'Advanced Penetration Testing & Ethical Hacking',
           lecturerName: 'Engr. K. Balogun',
-          hallLocation: 'Departmental Seminar Room',
-          department: 'Computer Science',
-          totalLectures: 2,
-          createdAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
+          hallLocation: "Redeemer's Cyber Range Lab",
+          department: 'Cybersecurity',
+          totalLectures: 0,
+          createdAt: Date.now(),
         },
       ],
     };
@@ -586,6 +599,64 @@ export class AttendanceApiService {
     }
   }
 
+  // Update student (Edit)
+  static async updateStudent(jambRegNo: string, updatedData: Partial<Student>): Promise<{ success: boolean; student?: Student; error?: string }> {
+    try {
+      const res = await fetch(`/api/students/${encodeURIComponent(jambRegNo)}`, {
+        method: 'PUT',
+        headers: this.getAdminAuthHeaders(),
+        body: JSON.stringify(updatedData),
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return { success: false, error: 'Network error updating student' };
+    }
+  }
+
+  // Delete student
+  static async deleteStudent(jambRegNo: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetch(`/api/students/${encodeURIComponent(jambRegNo)}`, {
+        method: 'DELETE',
+        headers: this.getAdminAuthHeaders(),
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return { success: false, error: 'Network error deleting student' };
+    }
+  }
+
+  // Create course
+  static async createCourse(courseData: Partial<Course>): Promise<{ success: boolean; course?: Course; error?: string }> {
+    try {
+      const res = await fetch('/api/courses', {
+        method: 'POST',
+        headers: this.getAdminAuthHeaders(),
+        body: JSON.stringify(courseData),
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return { success: false, error: 'Network error creating course' };
+    }
+  }
+
+  // Delete course
+  static async deleteCourse(courseId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetch(`/api/courses/${encodeURIComponent(courseId)}`, {
+        method: 'DELETE',
+        headers: this.getAdminAuthHeaders(),
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return { success: false, error: 'Network error deleting course' };
+    }
+  }
+
   // Reset student roster
   static async resetStudents(): Promise<Student[]> {
     try {
@@ -679,7 +750,7 @@ export class AttendanceApiService {
       }
       return { success: false, message: data.message || 'Incorrect password' };
     } catch {
-      const valid = ['rep2024', 'admin123', 'unipass2024', 'csc401'];
+      const valid = ['rep2026'];
       if (valid.includes(password.trim())) {
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('unipass_admin_auth', 'true');

@@ -8,7 +8,9 @@ import {
   Lock,
   KeyRound,
   GraduationCap,
+  BookOpen,
 } from 'lucide-react';
+import { PWAInstallButton } from './PWAInstallButton.tsx';
 
 export type ActiveTab = 'student' | 'admin' | 'projector' | 'roster' | 'my-stats';
 
@@ -21,6 +23,7 @@ interface NavbarProps {
   onOpenAdminLogin: () => void;
   onAdminLogout: () => void;
   onOpenSecurityModal: () => void;
+  onOpenOnboarding: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,6 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdminLogin,
   onAdminLogout,
   onOpenSecurityModal,
+  onOpenOnboarding,
 }) => {
   return (
     <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-white">
@@ -45,14 +49,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onTabChange('student')}
             className="text-left group cursor-pointer focus:outline-none"
           >
-            <span className="text-lg font-bold tracking-tight text-white block group-hover:text-emerald-400 transition-colors whitespace-nowrap">
-              UniPass<span className="text-emerald-400 text-xs font-mono ml-1 font-semibold">NG</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base sm:text-lg font-bold tracking-tight text-white block group-hover:text-emerald-400 transition-colors whitespace-nowrap">
+                RUN CyberPass
+              </span>
+              <span className="hidden xl:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">
+                CYBERSECURITY
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-400 -mt-0.5 block tracking-wide truncate max-w-[170px] sm:max-w-none">
+              Redeemer's University · Computing & Digital Technology
             </span>
           </button>
         </div>
 
         {/* Zone 2: Navigation Links (Public Tabs + Authenticated Rep Hub) */}
-        <nav className="hidden md:flex items-center gap-1 sm:gap-2 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-1 sm:gap-1.5 text-sm font-medium">
           {/* 1. Student Check-In (Public) */}
           <button
             onClick={() => onTabChange('student')}
@@ -119,18 +131,31 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Course Rep Hub</span>
             </button>
           )}
+
+          {/* 6. Onboarding Guide Modal Trigger */}
+          <button
+            onClick={onOpenOnboarding}
+            className="px-2.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer text-xs"
+            title="Read Guide: How RUN CyberPass works"
+          >
+            <BookOpen className="w-4 h-4 text-emerald-400" />
+            <span>Guide</span>
+          </button>
         </nav>
 
         {/* Zone 3: Primary Action & Auth Controls */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {sessionActive && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-mono tabular-nums">
+            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-mono tabular-nums">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="font-semibold whitespace-nowrap">
-                {activeCourseCode || 'CSC 401'} Live
+                {activeCourseCode || 'CYB 201'} Live
               </span>
             </div>
           )}
+
+          {/* In-App PWA Install Button */}
+          <PWAInstallButton variant="nav" />
 
           {/* Security Shield Modal Trigger */}
           <button
@@ -139,7 +164,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Inspect 6-Layer Security & Anti-Tamper Shield"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline text-emerald-400 font-semibold">Security Shield</span>
+            <span className="hidden lg:inline text-emerald-400 font-semibold">Security</span>
           </button>
 
           {isAdminAuthenticated ? (
@@ -162,11 +187,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onOpenAdminLogin}
               className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
-              title="Course Rep & Lecturer Portal Login"
+              title="Course Rep Portal Login (Password: rep2026)"
             >
               <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Course Rep Login</span>
-              <span className="sm:hidden">Rep Login</span>
+              <span className="hidden sm:inline">Rep Login</span>
+              <span className="sm:hidden">Rep</span>
             </button>
           )}
         </div>
@@ -209,6 +234,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <Users className="w-3.5 h-3.5" />
           <span>Directory</span>
+        </button>
+
+        <button
+          onClick={onOpenOnboarding}
+          className="px-2 py-1.5 text-slate-400 hover:text-white flex items-center gap-1"
+          title="RUN CyberPass Onboarding Guide"
+        >
+          <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Guide</span>
         </button>
 
         {isAdminAuthenticated ? (

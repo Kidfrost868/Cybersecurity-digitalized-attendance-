@@ -15,6 +15,9 @@ import {
   TrendingUp,
   RefreshCw,
   PlusCircle,
+  Plus,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { AttendanceApiService } from '../services/api.ts';
 import { Course, CourseLedger, AttendanceSession } from '../types/attendance.ts';
@@ -29,21 +32,37 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
   activeSession,
 }) => {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>('course-csc401');
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [ledger, setLedger] = useState<CourseLedger | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'eligible' | 'at_risk' | 'ineligible'>('all');
   const [isExporting, setIsExporting] = useState(false);
 
+  // Add Course Modal State
+  const [isAddCourseModalOpen, setIsAddCourseModalOpen] = useState(false);
+  const [newCourseCode, setNewCourseCode] = useState('');
+  const [newCourseTitle, setNewCourseTitle] = useState('');
+  const [newLecturerName, setNewLecturerName] = useState('');
+  const [newHallLocation, setNewHallLocation] = useState("Redeemer's Cyber Range Lab");
+  const [newDepartment, setNewDepartment] = useState('Cybersecurity');
+  const [isSubmittingCourse, setIsSubmittingCourse] = useState(false);
+
+  // Delete Course State
+  const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
+  const [isDeletingCourse, setIsDeletingCourse] = useState(false);
+
   // Load courses
   const fetchCourses = async () => {
     try {
       const res = await AttendanceApiService.getCourses();
-      if (res.courses && res.courses.length > 0) {
+      if (res.courses) {
         setCourses(res.courses);
-        if (!selectedCourseId) {
-          setSelectedCourseId(res.courses[0].id);
+        if (res.courses.length > 0) {
+          setSelectedCourseId((prev) => (prev && res.courses.some(c => c.id === prev) ? prev : res.courses[0].id));
+        } else {
+          setSelectedCourseId('');
+          setLedger(null);
         }
       }
     } catch {
@@ -96,6 +115,63 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
     }
   };
 
+  const handleCreateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCourseCode.trim() || !newCourseTitle.trim()) return;
+
+    setIsSubmittingCourse(true);
+    try {
+      const res = await AttendanceApiService.createCourse({
+        code: newCourseCode.trim().toUpperCase(),
+        title: newCourseTitle.trim(),
+        lecturerName: newLecturerName.trim() || 'Lecturer',
+        hallLocation: newHallLocation.trim() || "Redeemer's Cyber Range Lab",
+        department: newDepartment.trim() || 'Cybersecurity',
+      });
+
+      if (res.success && res.course) {
+        setIsAddCourseModalOpen(false);
+        setNewCourseCode('');
+        setNewCourseTitle('');
+        setNewLecturerName('');
+        await fetchCourses();
+        setSelectedCourseId(res.course.id);
+      } else {
+        alert(res.error || 'Failed to create course');
+      }
+    } catch {
+      alert('Network error creating course');
+    } finally {
+      setIsSubmittingCourse(false);
+    }
+  };
+
+  const handleConfirmDeleteCourse = async () => {
+    if (!deletingCourse) return;
+    setIsDeletingCourse(true);
+    try {
+      const res = await AttendanceApiService.deleteCourse(deletingCourse.id);
+      if (res.success) {
+        const deletedId = deletingCourse.id;
+        setDeletingCourse(null);
+        const remaining = courses.filter((c) => c.id !== deletedId);
+        setCourses(remaining);
+        if (remaining.length > 0) {
+          setSelectedCourseId(remaining[0].id);
+        } else {
+          setSelectedCourseId('');
+          setLedger(null);
+        }
+      } else {
+        alert(res.error || 'Failed to delete course');
+      }
+    } catch {
+      alert('Network error deleting course');
+    } finally {
+      setIsDeletingCourse(false);
+    }
+  };
+
   // Filter students in matrix
   const filteredStudents = (ledger?.students || []).filter((row) => {
     const matchesSearch =
@@ -134,17 +210,27 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
 
           <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={handleExportCsv}
-              disabled={isExporting || !ledger}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-md disabled:opacity-50"
+              onClick={() => setIsAddCourseModalOpen(true)}
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
             >
-              {isExporting ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Download className="w-3.5 h-3.5" />
-              )}
-              <span>Export Matrix CSV</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Course</span>
             </button>
+
+            {courses.length > 0 && (
+              <button
+                onClick={handleExportCsv}
+                disabled={isExporting || !ledger}
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isExporting ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                <span>Export Matrix CSV</span>
+              </button>
+            )}
 
             {ledger && onStartLectureForCourse && (
               <button
@@ -156,35 +242,79 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 <span>Launch Next Lecture (#{ledger.totalLecturesHeld + 1})</span>
               </button>
             )}
+
+            {ledger && (
+              <button
+                onClick={() => setDeletingCourse(ledger.course)}
+                className="p-2 bg-slate-900 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-500/40 rounded-xl text-xs transition-colors cursor-pointer"
+                title={`Delete ${ledger.course.code} from Ledger`}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Course Pills */}
-        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-800/80 overflow-x-auto pb-1">
-          {courses.map((c) => {
-            const isSelected = selectedCourseId === c.id;
-            const isLive = activeSession?.courseCode.toUpperCase() === c.code.toUpperCase();
+        {courses.length > 0 && (
+          <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-800/80 overflow-x-auto pb-1">
+            {courses.map((c) => {
+              const isSelected = selectedCourseId === c.id;
+              const isLive = activeSession?.courseCode.toUpperCase() === c.code.toUpperCase();
 
-            return (
-              <button
-                key={c.id}
-                onClick={() => setSelectedCourseId(c.id)}
-                className={`px-3 py-2 rounded-xl text-xs font-medium transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
-                  isSelected
-                    ? 'bg-emerald-600 text-white shadow-md font-semibold'
-                    : 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                }`}
-              >
-                <span className="font-mono">{c.code}</span>
-                <span className="text-[11px] opacity-80">({c.totalLectures} Lecs)</span>
-                {isLive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedCourseId(c.id)}
+                  className={`px-3 py-2 rounded-xl text-xs font-medium transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                    isSelected
+                      ? 'bg-emerald-600 text-white shadow-md font-semibold'
+                      : 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  <span className="font-mono">{c.code}</span>
+                  <span className="text-[11px] opacity-80">({c.totalLectures} Lecs)</span>
+                  {isLive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping" />
+                  )}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => setIsAddCourseModalOpen(true)}
+              className="px-3 py-2 rounded-xl text-xs font-medium bg-slate-900 text-emerald-400 hover:bg-slate-800 border border-emerald-500/30 hover:border-emerald-500/60 transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Add Course</span>
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Empty State when no courses configured */}
+      {!isLoading && courses.length === 0 && (
+        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center shadow-xl space-y-4 max-w-xl mx-auto my-8">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
+            <BookOpen className="w-8 h-8" />
+          </div>
+          <div className="space-y-1.5">
+            <h3 className="text-lg font-bold text-white tracking-tight">Course Ledger is Empty</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+              All previous test courses have been cleared. As the Class Rep, click below to add your courses (e.g. CYB 401, CYB 201) to begin tracking multi-session attendance records and Senate 75% exam eligibility.
+            </p>
+          </div>
+          <div className="pt-2">
+            <button
+              onClick={() => setIsAddCourseModalOpen(true)}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/50 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add First Course</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Loading state */}
       {isLoading && (
@@ -462,6 +592,155 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL: ADD COURSE */}
+      {isAddCourseModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleCreateCourse}
+            className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in fade-in duration-150"
+          >
+            <div className="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-800">
+              <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Plus className="w-4 h-4 text-emerald-400" />
+                Add Course to Attendance Ledger
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsAddCourseModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">
+                Course Code *
+              </label>
+              <input
+                type="text"
+                value={newCourseCode}
+                onChange={(e) => setNewCourseCode(e.target.value.toUpperCase())}
+                placeholder="e.g. CYB 401"
+                required
+                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-emerald-500 uppercase"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">
+                Course Title *
+              </label>
+              <input
+                type="text"
+                value={newCourseTitle}
+                onChange={(e) => setNewCourseTitle(e.target.value)}
+                placeholder="e.g. Advanced Penetration Testing & Ethical Hacking"
+                required
+                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">
+                  Lecturer Name
+                </label>
+                <input
+                  type="text"
+                  value={newLecturerName}
+                  onChange={(e) => setNewLecturerName(e.target.value)}
+                  placeholder="e.g. Dr. E. O. Babalola"
+                  className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">
+                  Lecture Venue
+                </label>
+                <input
+                  type="text"
+                  value={newHallLocation}
+                  onChange={(e) => setNewHallLocation(e.target.value)}
+                  placeholder="e.g. Redeemer's Cyber Range Lab"
+                  className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">
+                Department
+              </label>
+              <input
+                type="text"
+                value={newDepartment}
+                onChange={(e) => setNewDepartment(e.target.value)}
+                placeholder="Cybersecurity"
+                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="pt-2 flex gap-2.5">
+              <button
+                type="submit"
+                disabled={isSubmittingCourse}
+                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{isSubmittingCourse ? 'Creating...' : 'Create Course'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddCourseModalOpen(false)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: DELETE COURSE CONFIRMATION */}
+      {deletingCourse && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in duration-150">
+            <div className="flex items-center gap-2.5 text-rose-400">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <h3 className="font-bold text-white text-sm">Delete Course from Ledger?</h3>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Are you sure you want to remove <strong className="text-white">{deletingCourse.code}</strong> ({deletingCourse.title}) from the Course Ledger?
+            </p>
+
+            <div className="p-3 bg-rose-950/30 border border-rose-500/30 rounded-xl text-[11px] text-rose-300">
+              This will remove this course from the cumulative matrix view.
+            </div>
+
+            <div className="pt-2 flex gap-2.5">
+              <button
+                type="button"
+                onClick={handleConfirmDeleteCourse}
+                disabled={isDeletingCourse}
+                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeletingCourse ? 'Deleting...' : 'Yes, Delete Course'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeletingCourse(null)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

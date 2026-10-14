@@ -10,11 +10,9 @@ import {
   RefreshCw,
   Sparkles,
   Lock,
-  Download,
-  Share2,
 } from 'lucide-react';
 import { AttendanceApiService } from '../services/api.ts';
-import { getDeviceSecurityPayload, getDeviceSummary } from '../utils/deviceFingerprint.ts';
+import { getDeviceSecurityPayload } from '../utils/deviceFingerprint.ts';
 import { AttendanceRecord, SessionPublicInfo } from '../types/attendance.ts';
 
 interface StudentPortalProps {
@@ -163,12 +161,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     }
   };
 
-  // Demo Student Fast Selection
+  // Real Student Quick Selector
   const demoStudents = [
-    { name: 'Chioma Okafor', jamb: '2024/104829AB' },
-    { name: 'David Adeleke', jamb: '2024/108472CD' },
-    { name: 'Ibrahim Mohammed', jamb: '2024/119283EF' },
-    { name: 'Ngozi Blessing Eze', jamb: '2024/129384GH' },
+    { name: 'Asuelime Mcchris', jamb: '202660245646HJ' },
+    { name: 'Idudu Oghenetekome Favour', jamb: '202660181457IF' },
+    { name: 'Alaba Samuel Oluwatumininu', jamb: '202660546091HG' },
+    { name: 'Arowoshola Dejola', jamb: 'RUN/CYB/25/18825' },
+    { name: 'Joshua Jeremiah', jamb: '202660045223BB' },
   ];
 
   const handleSelectDemo = (jamb: string) => {
@@ -181,7 +180,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     }, 150);
   };
 
-  // Form Submission
+  // Form Submission with 1-Minute Passcode & Single-Device Anti-Proxy Verification
   const handleSubmitCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -191,7 +190,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     const passcode = pinDigits.join('');
 
     if (!cleanJamb) {
-      setErrorMessage('Please enter your JAMB Registration Number.');
+      setErrorMessage('Please enter your accredited JAMB Registration Number.');
       return;
     }
 
@@ -332,9 +331,9 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             </div>
 
             {/* Anti-Proxy Device Badge */}
-            <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-lg flex items-center gap-2.5 text-xs text-emerald-300">
+            <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300">
               <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span>Device Locked: One submission recorded for this phone.</span>
+              <span>Device Locked: Single-device hardware lock verified for this student.</span>
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
@@ -372,12 +371,40 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6"
           >
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight">
-                Student Check-In
-              </h1>
+              <div className="flex items-center justify-between">
+                <h1 className="text-xl font-bold text-white tracking-tight">
+                  Student Check-In
+                </h1>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                  RUN CyberPass
+                </span>
+              </div>
               <p className="text-xs text-slate-400 mt-1">
                 Enter your JAMB registration number and the live 4-digit passcode displayed in class.
               </p>
+            </div>
+
+            {/* Live Verification Shield Card: 1-Minute Rolling PIN + Single-Device Lock */}
+            <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/90 text-xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="font-semibold text-white">Live Attendance Shield Active</span>
+                </div>
+                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                  Fast Anti-Proxy Lock
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-slate-300">
+                <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>1-Min Rotating PIN</span>
+                </div>
+                <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>1 Device = 1 Student</span>
+                </div>
+              </div>
             </div>
 
             {/* Error Message Box */}
@@ -390,16 +417,16 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                   : 'bg-red-950/40 border-red-500/40 text-red-300'
               }`}>
                 <AlertCircle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
-                <div className="space-y-1">
+                <div className="space-y-1.5 flex-1">
                   <p className="font-semibold">{errorMessage}</p>
                   {errorCode === 'INVALID_CODE' && (
                     <p className="text-slate-400">
-                      Tip: Passcodes rotate every 1 minute. Make sure you enter the latest PIN from the projector screen.
+                      Tip: Passcodes rotate every 1 minute. Make sure you enter the latest PIN from the classroom projector.
                     </p>
                   )}
                   {errorCode === 'DEVICE_LOCKED' && (
                     <p className="text-slate-400">
-                      Anti-Proxy Violation: A single device cannot check in for multiple coursemates. Please see the Course Rep for manual review.
+                      Single-Device Lock: This phone has already submitted attendance for another coursemate. Anti-proxy rules prevent signing in for multiple students.
                     </p>
                   )}
                 </div>
@@ -541,12 +568,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !jambRegNo.trim() || pinDigits.some(d => !d)}
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white font-semibold text-sm transition-all shadow-lg shadow-emerald-950 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full h-12 rounded-xl text-white font-semibold text-sm transition-all shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 cursor-pointer bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600"
             >
               {isSubmitting ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Verifying Passcode & Device...</span>
+                  <span>Verifying Passcode & Identity...</span>
                 </>
               ) : (
                 <>
@@ -568,8 +595,8 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             <Lock className="w-3.5 h-3.5 text-slate-500" />
             <span>Lecturer & Course Rep Login</span>
           </button>
-          <p className="text-[10px] text-slate-600 mt-0.5 font-mono">
-            UniPass NG · Protected University Examination & Attendance Portal
+          <p className="text-[10px] text-slate-500 mt-0.5 font-mono">
+            RUN CyberPass · Redeemer's University Faculty of Computing and Digital Technology
           </p>
         </div>
       </div>

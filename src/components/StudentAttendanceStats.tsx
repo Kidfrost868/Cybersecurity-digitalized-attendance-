@@ -33,18 +33,18 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
   activeCourseCode,
   initialJambQuery = '',
 }) => {
-  const [searchQuery, setSearchQuery] = useState(initialJambQuery || '2024/104829AB');
+  const [searchQuery, setSearchQuery] = useState(initialJambQuery || '202660245646HJ');
   const [isLoading, setIsLoading] = useState(false);
   const [studentData, setStudentData] = useState<StudentSummaryStats | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
 
-  // Quick lookup suggestions for demo testing
+  // Quick lookup suggestions for students
   const quickDemoStudents = [
-    { label: 'Chioma (High Attendance)', jamb: '2024/104829AB' },
-    { label: 'David (Course Rep)', jamb: '2024/108472CD' },
-    { label: 'Ibrahim (Regular)', jamb: '2024/119283EF' },
-    { label: 'Tunde (At Risk)', jamb: '2024/139485IJ' },
+    { label: 'Asuelime Mcchris', jamb: '202660245646HJ' },
+    { label: 'Idudu Oghenetekome', jamb: '202660181457IF' },
+    { label: 'Alaba Samuel', jamb: '202660546091HG' },
+    { label: 'Arowoshola Dejola', jamb: 'RUN/CYB/25/18825' },
   ];
 
   const handleSearch = async (queryToUse?: string) => {

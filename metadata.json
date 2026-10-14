@@ -1,6 +1,6 @@
 {
   "name": "UniPass - Smart University Attendance System",
-  "description": "Mobile-first anti-proxy university lecture attendance system with 1-minute rolling passcodes, JAMB registration verification, single-device session locking, and high-contrast projector display.",
+  "description": "Institutional attendance verification for Cybersecurity students in the Faculty of Computing & Digital Technology at Redeemer's University. Features 1-minute rolling passcodes, single-device anti-proxy hardware locks, interactive Course Ledger, and student roster management.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -37,49 +37,28 @@ function getPasscodeForInterval(sessionId: string, intervalIndex: number): strin
 // In-Memory Database Store
 let masterStudents: Student[] = [...SEED_STUDENTS];
 
-// Registered Courses
-let masterCourses: Course[] = [
-  {
-    id: 'course-csc401',
-    code: 'CSC 401',
-    title: 'Distributed Computing & Cloud Architecture',
-    lecturerName: 'Dr. E. O. Babalola',
-    hallLocation: 'ETF Lecture Theatre 1',
-    department: 'Computer Science',
-    totalLectures: 5,
-    createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'course-csc415',
-    code: 'CSC 415',
-    title: 'Cryptography & Network Security',
-    lecturerName: 'Prof. O. K. Adeleke',
-    hallLocation: 'Computer Lab 2B',
-    department: 'Computer Science',
-    totalLectures: 3,
-    createdAt: Date.now() - 25 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'course-mth301',
-    code: 'MTH 301',
-    title: 'Numerical Analysis & Differential Equations',
-    lecturerName: 'Dr. Mrs. A. Funmilayo',
-    hallLocation: 'Faculty Large Auditorium B',
-    department: 'Computer Science & Maths',
-    totalLectures: 4,
-    createdAt: Date.now() - 28 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'course-csc421',
-    code: 'CSC 421',
-    title: 'Software Engineering & Agile Methodologies',
-    lecturerName: 'Engr. K. Balogun',
-    hallLocation: 'Departmental Seminar Room',
-    department: 'Computer Science',
-    totalLectures: 2,
-    createdAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
-  },
-];
+// Redeemer's University Ede Campus Baseline GPS Coordinates (Main Campus, Osun State)
+const DEFAULT_RUN_LAT = 7.6983;
+const DEFAULT_RUN_LNG = 4.4239;
+
+// Haversine distance formula between two lat/lng coordinates in meters
+function calculateHaversineDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000; // Earth radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
+// Registered Courses for Redeemer's University Cybersecurity Department (Faculty of Computing & Digital Technology)
+// Starts completely clean per user request
+let masterCourses: Course[] = [];
 
 let activeSession: AttendanceSession | null = null;
 let completedSessions: AttendanceSession[] = [];
@@ -101,140 +80,16 @@ interface RateLimitEntry {
 }
 const bruteForceTracker: Map<string, RateLimitEntry> = new Map();
 
-// Deterministic historical attendance generator for seed lectures
-function seedHistoricalLectureSessions() {
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-  const now = Date.now();
-
-  // Helper to seed a completed lecture session with realistic student attendance
-  const createPastSession = (
-    course: Course,
-    lectureNum: number,
-    daysAgo: number,
-    hall: string,
-    attendanceProbability: number
-  ) => {
-    const sessionStartTime = now - daysAgo * ONE_DAY - 2 * 60 * 60 * 1000;
-    const durationMs = 5 * 60 * 1000;
-    const sessId = `session-${course.code.toLowerCase().replace(/\s+/g, '')}-lec${lectureNum}`;
-
-    const pastSession: AttendanceSession = {
-      id: sessId,
-      courseId: course.id,
-      lectureNumber: lectureNum,
-      courseCode: course.code,
-      courseTitle: course.title,
-      lecturerName: course.lecturerName,
-      courseRepName: 'David Adeleke (Class Rep)',
-      hallLocation: hall,
-      startTime: sessionStartTime,
-      durationMs,
-      expiresAt: sessionStartTime + durationMs,
-      status: 'completed',
-      currentPasscode: getPasscodeForInterval(sessId, 4),
-      previousPasscode: getPasscodeForInterval(sessId, 3),
-      passcodeRotatedAt: sessionStartTime + 4 * 60 * 1000,
-      passcodeExpiresAt: sessionStartTime + durationMs,
-      passcodeIntervalMs: 60 * 1000,
-    };
-
-    completedSessions.push(pastSession);
-
-    // Create realistic attendance records for master students
-    masterStudents.forEach((student, index) => {
-      // Deterministic variation: top students attend almost all, some have 70-80%, few have < 50%
-      const studentSeed = (student.jambRegNo.charCodeAt(student.jambRegNo.length - 1) + lectureNum * 7 + index) % 100;
-      const attended = studentSeed < (attendanceProbability * 100);
-
-      if (attended) {
-        const checkInOffset = 30 * 1000 + (studentSeed * 2500); // 30s to 4.5 mins in
-        const recordTime = sessionStartTime + checkInOffset;
-        const recordId = `rec-${sessId}-${student.jambRegNo.replace(/[^a-zA-Z0-9]/g, '')}`;
-        attendanceRecords.push({
-          id: recordId,
-          sessionId: sessId,
-          courseId: course.id,
-          courseCode: course.code,
-          lectureNumber: lectureNum,
-          jambRegNo: student.jambRegNo,
-          studentName: student.fullName,
-          matricNo: student.matricNo,
-          department: student.department,
-          deviceId: `dev-hist-${index}-${lectureNum}`,
-          deviceInfo: 'Mozilla/5.0 Mobile Device',
-          hardwareHash: `hw-hash-${index}`,
-          timestamp: recordTime,
-          status: 'verified',
-        });
-      }
-    });
-  };
-
-  // 1. Seed CSC 401: Lectures 1 to 4 completed
-  const csc401 = masterCourses[0];
-  createPastSession(csc401, 1, 21, 'ETF Lecture Theatre 1', 0.90);
-  createPastSession(csc401, 2, 14, 'ETF Lecture Theatre 1', 0.85);
-  createPastSession(csc401, 3, 7, 'ETF Lecture Theatre 1', 0.80);
-  createPastSession(csc401, 4, 3, 'ETF Lecture Theatre 1', 0.86);
-
-  // 2. Seed CSC 415: Lectures 1 to 3 completed
-  const csc415 = masterCourses[1];
-  createPastSession(csc415, 1, 18, 'Computer Lab 2B', 0.88);
-  createPastSession(csc415, 2, 11, 'Computer Lab 2B', 0.82);
-  createPastSession(csc415, 3, 4, 'Computer Lab 2B', 0.78);
-
-  // 3. Seed MTH 301: Lectures 1 to 4 completed
-  const mth301 = masterCourses[2];
-  createPastSession(mth301, 1, 24, 'Faculty Auditorium B', 0.92);
-  createPastSession(mth301, 2, 17, 'Faculty Auditorium B', 0.84);
-  createPastSession(mth301, 3, 10, 'Faculty Auditorium B', 0.76);
-  createPastSession(mth301, 4, 2, 'Faculty Auditorium B', 0.80);
-
-  // 4. Seed CSC 421: Lectures 1 to 2 completed
-  const csc421 = masterCourses[3];
-  createPastSession(csc421, 1, 12, 'Departmental Seminar Room', 0.85);
-  createPastSession(csc421, 2, 5, 'Departmental Seminar Room', 0.88);
-}
-
-// Initialize active session as Lecture 5 of CSC 401 so the live continuation is immediately apparent
-function initializeActiveSession() {
-  const now = Date.now();
-  const sessionId = 'session-csc401-lec5-live';
-  const durationMs = 5 * 60 * 1000;
-  const intervalMs = 60 * 1000;
-  const currentInterval = 0;
-
-  activeSession = {
-    id: sessionId,
-    courseId: 'course-csc401',
-    lectureNumber: 5, // Continues automatically from Lectures 1-4!
-    courseCode: 'CSC 401',
-    courseTitle: 'Distributed Computing & Cloud Architecture',
-    lecturerName: 'Dr. E. O. Babalola',
-    courseRepName: 'David Adeleke (Class Rep)',
-    hallLocation: 'ETF Lecture Theatre 1',
-    startTime: now,
-    durationMs,
-    expiresAt: now + durationMs,
-    status: 'active',
-    currentPasscode: getPasscodeForInterval(sessionId, currentInterval),
-    previousPasscode: getPasscodeForInterval(sessionId, currentInterval),
-    passcodeRotatedAt: now,
-    passcodeExpiresAt: now + intervalMs,
-    passcodeIntervalMs: intervalMs,
-  };
-}
-
-// Seed on startup
-seedHistoricalLectureSessions();
-initializeActiveSession();
-
 function getSessionState() {
   if (!activeSession) return null;
   const now = Date.now();
   if (now > activeSession.expiresAt && activeSession.status === 'active') {
     activeSession.status = 'completed';
-    completedSessions.push({ ...activeSession });
+    if (!completedSessions.some(s => s.id === activeSession!.id)) {
+      completedSessions.push({ ...activeSession });
+    }
+    activeSession = null;
+    return null;
   }
 
   const elapsed = now - activeSession.startTime;
@@ -262,7 +117,7 @@ function sanitizeText(val: unknown, maxLen = 80): string {
 }
 
 function isValidJamb(jamb: string): boolean {
-  return /^[A-Za-z0-9/]{6,20}$/.test(jamb);
+  return /^[A-Za-z0-9/.\s-]{5,32}$/.test(jamb.trim());
 }
 
 function isValidPasscode(code: string): boolean {
@@ -329,7 +184,7 @@ async function startServer() {
   // 1. Admin Login Verification
   app.post('/api/admin/login', (req, res) => {
     const { password } = req.body;
-    const validPasswords = ['rep2024', 'admin123', 'unipass2024', 'csc401'];
+    const validPasswords = ['rep2026'];
     if (password && validPasswords.includes(password.trim())) {
       const token = 'rep_auth_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
       activeAdminTokens.add(token);
@@ -381,6 +236,9 @@ async function startServer() {
         expiresAt: session.expiresAt,
         status: session.status,
         remainingMs: Math.max(0, session.expiresAt - Date.now()),
+        latitude: session.latitude,
+        longitude: session.longitude,
+        geofenceRadius: session.geofenceRadius || 60,
       },
       totalCheckedIn: recordsForSession.length,
       totalStudents: masterStudents.length,
@@ -390,7 +248,7 @@ async function startServer() {
   // 3. Projector View Data (Hall Screen)
   app.get('/api/session/projector', (_req, res) => {
     const session = getSessionState();
-    if (!session) {
+    if (!session || session.status !== 'active') {
       return res.json({ session: null, records: [], stats: { total: masterStudents.length, checkedIn: 0 } });
     }
 
@@ -416,7 +274,7 @@ async function startServer() {
     });
   });
 
-  // 4. Start New Session with Course Linking & Automatic Lecture Continuation
+  // 4. Start New Session with Course Linking & Dynamic GPS Geofencing
   app.post('/api/session/start', requireAdminAuth, (req, res) => {
     const {
       courseId,
@@ -427,6 +285,9 @@ async function startServer() {
       hallLocation,
       durationMinutes,
       passcodeIntervalSeconds,
+      latitude,
+      longitude,
+      geofenceRadius,
     } = req.body;
 
     const now = Date.now();
@@ -436,7 +297,9 @@ async function startServer() {
     // Archive any ongoing active session
     if (activeSession && activeSession.status === 'active') {
       activeSession.status = 'completed';
-      completedSessions.push({ ...activeSession });
+      if (!completedSessions.some(s => s.id === activeSession!.id)) {
+        completedSessions.push({ ...activeSession });
+      }
     }
 
     // Resolve or create course
@@ -448,10 +311,10 @@ async function startServer() {
       targetCourse = masterCourses.find(c => c.code.toUpperCase() === codeClean);
     }
 
-    const finalCode = targetCourse?.code || sanitizeText(courseCode || 'CSC 401', 20).toUpperCase();
-    const finalTitle = targetCourse?.title || sanitizeText(courseTitle || 'Distributed Computing & Cloud Architecture', 100);
+    const finalCode = targetCourse?.code || sanitizeText(courseCode || 'CYB 401', 20).toUpperCase();
+    const finalTitle = targetCourse?.title || sanitizeText(courseTitle || 'Advanced Penetration Testing & Ethical Hacking', 100);
     const finalLecturer = targetCourse?.lecturerName || sanitizeText(lecturerName || 'Dr. E. O. Babalola', 60);
-    const finalHall = targetCourse?.hallLocation || sanitizeText(hallLocation || 'ETF Lecture Theatre 1', 60);
+    const finalHall = targetCourse?.hallLocation || sanitizeText(hallLocation || "Redeemer's Cyber Range Lab", 60);
 
     // Compute continuing lecture number for this course
     const allPastSessionsForCourse = completedSessions.filter(
@@ -468,7 +331,7 @@ async function startServer() {
         title: finalTitle,
         lecturerName: finalLecturer,
         hallLocation: finalHall,
-        department: 'Computer Science',
+        department: 'Cybersecurity',
         totalLectures: nextLectureNumber,
         createdAt: now,
       };
@@ -479,6 +342,10 @@ async function startServer() {
 
     const sessionId = `session-${finalCode.toLowerCase().replace(/[^a-z0-9]/g, '')}-lec${nextLectureNumber}-${Date.now().toString().slice(-4)}`;
     const initialCode = getPasscodeForInterval(sessionId, 0);
+
+    const sessionLat = typeof latitude === 'number' && !isNaN(latitude) ? latitude : DEFAULT_RUN_LAT;
+    const sessionLng = typeof longitude === 'number' && !isNaN(longitude) ? longitude : DEFAULT_RUN_LNG;
+    const sessionRadius = typeof geofenceRadius === 'number' && geofenceRadius > 0 ? geofenceRadius : 60;
 
     activeSession = {
       id: sessionId,
@@ -498,6 +365,9 @@ async function startServer() {
       passcodeRotatedAt: now,
       passcodeExpiresAt: now + intervalMs,
       passcodeIntervalMs: intervalMs,
+      latitude: sessionLat,
+      longitude: sessionLng,
+      geofenceRadius: sessionRadius,
     };
 
     return res.json({ success: true, session: activeSession });
@@ -507,14 +377,17 @@ async function startServer() {
   app.post('/api/session/stop', requireAdminAuth, (_req, res) => {
     if (activeSession) {
       activeSession.status = 'completed';
-      completedSessions.push({ ...activeSession });
+      if (!completedSessions.some(s => s.id === activeSession!.id)) {
+        completedSessions.push({ ...activeSession });
+      }
+      activeSession = null;
     }
-    return res.json({ success: true });
+    return res.json({ success: true, message: 'Session concluded and archived.' });
   });
 
-  // 6. Student Check-In with Single-Device Security Guard
+  // 6. Student Check-In with Single-Device & 60m Dynamic GPS Geofence Security
   app.post('/api/check-in', (req, res) => {
-    const { sessionId, jambRegNo, passcode, deviceId, hardwareHash, deviceInfo } = req.body;
+    const { sessionId, jambRegNo, passcode, deviceId, hardwareHash, deviceInfo, userLat, userLng } = req.body;
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
     const now = Date.now();
 
@@ -734,7 +607,7 @@ async function startServer() {
       }
     }
 
-    // Record attendance
+    // Record verified attendance (Validated via 1-minute rolling PIN + Single-Device Hardware Lock)
     const newRecord: AttendanceRecord = {
       id: 'rec-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
       sessionId: session.id,
@@ -829,8 +702,8 @@ async function startServer() {
     const newStudent: Student = {
       jambRegNo: cleanJamb,
       fullName: cleanName,
-      matricNo: matricNo ? sanitizeText(matricNo, 20).toUpperCase() : `CSC/${Date.now().toString().slice(-4)}`,
-      department: department ? sanitizeText(department, 40) : 'Computer Science',
+      matricNo: matricNo ? sanitizeText(matricNo, 20).toUpperCase() : `RUN/CYB/2021/${Date.now().toString().slice(-3)}`,
+      department: department ? sanitizeText(department, 40) : 'Cybersecurity',
       level: level ? sanitizeText(level, 10) : '400L',
       createdAt: Date.now(),
     };
@@ -854,9 +727,9 @@ async function startServer() {
           masterStudents.push({
             jambRegNo: cleanJamb,
             fullName: sanitizeText(item.fullName, 80),
-            matricNo: item.matricNo ? sanitizeText(item.matricNo, 20).toUpperCase() : `GEN/${Math.floor(1000 + Math.random() * 9000)}`,
-            department: item.department ? sanitizeText(item.department, 40) : 'Computer Science',
-            level: item.level ? sanitizeText(item.level, 10) : '400L',
+            matricNo: item.matricNo ? sanitizeText(item.matricNo, 25).toUpperCase() : `RUN/CYB/2026/${Math.floor(100 + Math.random() * 900)}`,
+            department: item.department ? sanitizeText(item.department, 40) : 'Cybersecurity',
+            level: item.level ? sanitizeText(item.level, 10) : '100L',
             createdAt: Date.now(),
           });
           addedCount++;
@@ -865,6 +738,53 @@ async function startServer() {
     }
 
     return res.json({ success: true, addedCount, total: masterStudents.length });
+  });
+
+  // 10b. Update / Edit Student (Course Rep Only)
+  app.put('/api/students/:jamb', requireAdminAuth, (req, res) => {
+    const rawJamb = decodeURIComponent(req.params.jamb).trim().toUpperCase();
+    const student = masterStudents.find(
+      s => s.jambRegNo.toUpperCase() === rawJamb || s.matricNo.toUpperCase() === rawJamb
+    );
+    if (!student) {
+      return res.status(404).json({ success: false, error: 'Student not found in master roster.' });
+    }
+
+    const { fullName, matricNo, department, level, jambRegNo } = req.body;
+    if (fullName) {
+      student.fullName = sanitizeText(fullName, 80);
+    }
+    if (matricNo) {
+      student.matricNo = sanitizeText(matricNo, 25).toUpperCase();
+    }
+    if (department) {
+      student.department = sanitizeText(department, 50);
+    }
+    if (level) {
+      student.level = sanitizeText(level, 10);
+    }
+    if (jambRegNo) {
+      const cleanNewJamb = sanitizeText(jambRegNo, 25).toUpperCase();
+      if (isValidJamb(cleanNewJamb)) {
+        student.jambRegNo = cleanNewJamb;
+      }
+    }
+
+    return res.json({ success: true, student });
+  });
+
+  // 10c. Delete Student (Course Rep Only)
+  app.delete('/api/students/:jamb', requireAdminAuth, (req, res) => {
+    const rawJamb = decodeURIComponent(req.params.jamb).trim().toUpperCase();
+    const index = masterStudents.findIndex(
+      s => s.jambRegNo.toUpperCase() === rawJamb || s.matricNo.toUpperCase() === rawJamb
+    );
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: 'Student not found in master roster.' });
+    }
+
+    const deletedStudent = masterStudents.splice(index, 1)[0];
+    return res.json({ success: true, message: `Student ${deletedStudent.fullName} removed from roster.`, student: deletedStudent });
   });
 
   // 11. Reset Student Roster (Course Rep Only)
@@ -898,6 +818,50 @@ async function startServer() {
     return res.json({ courses: coursesWithStats });
   });
 
+  // 12b. Add New Course to Ledger (Course Rep Only)
+  app.post('/api/courses', requireAdminAuth, (req, res) => {
+    const { code, title, lecturerName, hallLocation, department } = req.body;
+    if (!code || !title) {
+      return res.status(400).json({ success: false, error: 'Course Code and Course Title are required.' });
+    }
+
+    const cleanCode = sanitizeText(code, 20).toUpperCase();
+    const cleanTitle = sanitizeText(title, 100);
+    const existing = masterCourses.find(c => c.code.toUpperCase() === cleanCode);
+    if (existing) {
+      return res.status(400).json({ success: false, error: `Course ${cleanCode} is already registered in the ledger.` });
+    }
+
+    const courseId = 'course-' + cleanCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const newCourse: Course = {
+      id: courseId,
+      code: cleanCode,
+      title: cleanTitle,
+      lecturerName: lecturerName ? sanitizeText(lecturerName, 60) : 'Lecturer',
+      hallLocation: hallLocation ? sanitizeText(hallLocation, 80) : "Redeemer's Cyber Range Lab",
+      department: department ? sanitizeText(department, 60) : 'Cybersecurity',
+      totalLectures: 0,
+      createdAt: Date.now(),
+    };
+
+    masterCourses.push(newCourse);
+    return res.json({ success: true, course: newCourse });
+  });
+
+  // 12c. Delete Course from Ledger (Course Rep Only)
+  app.delete('/api/courses/:courseId', requireAdminAuth, (req, res) => {
+    const targetId = decodeURIComponent(req.params.courseId).trim().toLowerCase();
+    const index = masterCourses.findIndex(
+      c => c.id.toLowerCase() === targetId || c.code.toLowerCase() === targetId
+    );
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: 'Course not found in ledger.' });
+    }
+
+    const deletedCourse = masterCourses.splice(index, 1)[0];
+    return res.json({ success: true, message: `Course ${deletedCourse.code} removed from ledger.`, course: deletedCourse });
+  });
+
   // 13. Unified Course Ledger (Multi-Session Continuity Matrix)
   app.get('/api/courses/:courseId/ledger', (req, res) => {
     const courseId = req.params.courseId;
@@ -907,13 +871,16 @@ async function startServer() {
     }
 
     const liveSession = getSessionState();
-    const courseSessions = completedSessions
+    const sessionMap = new Map<string, AttendanceSession>();
+    completedSessions
       .filter(s => s.courseCode.toUpperCase() === course.code.toUpperCase())
-      .slice();
+      .forEach(s => sessionMap.set(s.id, s));
 
     if (liveSession && liveSession.courseCode.toUpperCase() === course.code.toUpperCase()) {
-      courseSessions.push(liveSession);
+      sessionMap.set(liveSession.id, liveSession);
     }
+
+    const courseSessions = Array.from(sessionMap.values());
 
     // Sort sessions chronologically (Lecture 1, Lecture 2, ...)
     courseSessions.sort((a, b) => (a.lectureNumber || 0) - (b.lectureNumber || 0));
@@ -1006,14 +973,16 @@ async function startServer() {
     let eligibleCoursesCount = 0;
 
     const courseStatsList: StudentCourseStats[] = masterCourses.map(course => {
-      const courseSessions = completedSessions
+      const sessionMap = new Map<string, AttendanceSession>();
+      completedSessions
         .filter(s => s.courseCode.toUpperCase() === course.code.toUpperCase())
-        .slice();
+        .forEach(s => sessionMap.set(s.id, s));
 
       if (liveSession && liveSession.courseCode.toUpperCase() === course.code.toUpperCase()) {
-        courseSessions.push(liveSession);
+        sessionMap.set(liveSession.id, liveSession);
       }
 
+      const courseSessions = Array.from(sessionMap.values());
       courseSessions.sort((a, b) => (a.lectureNumber || 0) - (b.lectureNumber || 0));
       const totalHeld = courseSessions.length;
       totalClassesHeld += totalHeld;
