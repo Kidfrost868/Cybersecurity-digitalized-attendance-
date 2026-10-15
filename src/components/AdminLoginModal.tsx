@@ -46,8 +46,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl relative space-y-5">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-sm w-full p-5 sm:p-7 shadow-2xl relative space-y-5">
         {/* Close Button */}
         <button
           onClick={onClose}

@@ -22,9 +22,9 @@ export const OfflineIndicator: React.FC = () => {
   if (isOnline) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-xl bg-amber-600/95 border border-amber-400 px-3.5 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-bounce">
-      <WifiOff className="w-4 h-4 text-amber-200" />
-      <span>Offline Mode — Cached data is being used.</span>
+    <div className="fixed bottom-4 left-4 right-4 sm:right-auto sm:max-w-sm z-50 flex items-center gap-2 rounded-xl bg-amber-600/95 border border-amber-400 px-3.5 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-sm animate-bounce max-w-[calc(100vw-2rem)]">
+      <WifiOff className="w-4 h-4 text-amber-200 shrink-0" />
+      <span className="truncate">Offline Mode — Cached data is being used.</span>
     </div>
   );
 };

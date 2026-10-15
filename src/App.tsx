@@ -98,7 +98,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30">
       {/* Hide navbar only in projector mode for clean lecture hall projection */}
       {activeTab !== 'projector' && (
         <Navbar
@@ -118,7 +118,7 @@ export default function App() {
       <OfflineIndicator />
 
       {/* Main Content Router */}
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">
         {/* 1. Student Check-In (Public) */}
         {activeTab === 'student' && (
           <StudentPortal

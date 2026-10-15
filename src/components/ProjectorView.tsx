@@ -93,36 +93,36 @@ export const ProjectorView: React.FC<ProjectorViewProps> = ({
   const checkInUrl = typeof window !== 'undefined' ? window.location.origin : 'https://unipass.ng';
 
   return (
-    <div className="min-h-screen bg-[#070A11] text-white flex flex-col justify-between selection:bg-emerald-500/30 overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#070A11] text-white flex flex-col justify-between selection:bg-emerald-500/30 overflow-x-hidden font-sans w-full max-w-full">
       {/* Top Projector Bar */}
-      <header className="px-6 py-4 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      <header className="px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md w-full max-w-full gap-2 overflow-hidden">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <button
             onClick={onBackToDashboard}
-            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>{isAdminAuthenticated ? 'Rep Hub' : 'Check-In Portal'}</span>
+            <span className="hidden xs:inline">{isAdminAuthenticated ? 'Rep Hub' : 'Check-In'}</span>
           </button>
 
-          <div>
-            <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono font-bold block">
-              Lecture Hall Display · Projector Mode
+          <div className="min-w-0">
+            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-emerald-400 font-mono font-bold block truncate">
+              Hall Projector PIN
             </span>
-            <h1 className="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
-              <span>{session?.courseCode || 'CYB 201'}</span>
+            <h1 className="text-xs sm:text-base md:text-lg font-bold text-slate-100 flex items-center gap-1.5 min-w-0">
+              <span className="shrink-0">{session?.courseCode || 'CYB 201'}</span>
               <span className="text-slate-500 font-normal">·</span>
-              <span className="text-slate-400 font-normal text-sm sm:text-base truncate max-w-xs sm:max-w-md">
-                {session?.courseTitle || 'Introduction to Cybersecurity & Information Assurance'}
+              <span className="text-slate-400 font-normal text-xs sm:text-sm truncate">
+                {session?.courseTitle || 'Cybersecurity Lecture'}
               </span>
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <button
             onClick={() => setShowQrModal(!showQrModal)}
-            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-emerald-400 flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-emerald-400 flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Toggle QR Code for mobile cameras"
           >
             <QrCode className="w-4 h-4" />
@@ -131,17 +131,17 @@ export const ProjectorView: React.FC<ProjectorViewProps> = ({
 
           <button
             onClick={toggleFullscreen}
-            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Toggle Fullscreen"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            <span className="hidden sm:inline">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+            <span className="hidden sm:inline">{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
           </button>
         </div>
       </header>
 
       {/* Main High-Contrast Center Area */}
-      <main className="flex-1 flex flex-col justify-center items-center px-6 py-6 max-w-6xl mx-auto w-full">
+      <main className="flex-1 flex flex-col justify-center items-center px-3 sm:px-6 py-4 sm:py-6 max-w-6xl mx-auto w-full overflow-x-hidden">
         {isSessionActive ? (
           <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
@@ -159,18 +159,18 @@ export const ProjectorView: React.FC<ProjectorViewProps> = ({
               </div>
 
               {/* The Giant Passcode Presentation Box */}
-              <div className="w-full p-8 sm:p-10 rounded-3xl bg-slate-950 border-2 border-emerald-500/40 shadow-2xl shadow-emerald-950/30 flex flex-col items-center justify-center relative overflow-hidden">
-                <div className="absolute top-4 left-6 right-6 flex items-center justify-between text-xs text-slate-400 uppercase tracking-widest font-mono">
-                  <span>Current Rolling Passcode</span>
+              <div className="w-full p-5 sm:p-8 md:p-10 rounded-3xl bg-slate-950 border-2 border-emerald-500/40 shadow-2xl shadow-emerald-950/30 flex flex-col items-center justify-center relative overflow-hidden">
+                <div className="w-full flex items-center justify-between text-[11px] sm:text-xs text-slate-400 uppercase tracking-widest font-mono pb-2">
+                  <span>Rolling Passcode</span>
                   <span className="text-emerald-400 flex items-center gap-1">
                     <RotateCcw className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
-                    Live ({totalInterval >= 60 ? `${Math.round(totalInterval / 60)} min` : `${totalInterval}s`} rotation)
+                    Live ({totalInterval >= 60 ? `${Math.round(totalInterval / 60)}m` : `${totalInterval}s`})
                   </span>
                 </div>
 
-                {/* The 110px+ Tabular Passcode */}
-                <div className="my-6">
-                  <span className="font-mono text-7xl sm:text-8xl md:text-9xl font-extrabold tracking-widest text-emerald-400 select-all drop-shadow-[0_0_35px_rgba(16,185,129,0.35)]">
+                {/* The Responsive Passcode */}
+                <div className="my-4 sm:my-6">
+                  <span className="font-mono text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold tracking-widest text-emerald-400 select-all drop-shadow-[0_0_35px_rgba(16,185,129,0.35)]">
                     {session?.currentPasscode || '----'}
                   </span>
                 </div>
@@ -348,10 +348,10 @@ export const ProjectorView: React.FC<ProjectorViewProps> = ({
       </main>
 
       {/* Projector Footer Info */}
-      <footer className="px-6 py-3 border-t border-slate-800/80 bg-slate-950/80 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <span>Student Check-In Portal: <strong className="text-slate-300 font-mono">{checkInUrl}</strong></span>
-          <span aria-hidden="true">·</span>
+      <footer className="px-3 sm:px-6 py-3 border-t border-slate-800/80 bg-slate-950/80 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left w-full max-w-full overflow-hidden">
+        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
+          <span>Student Portal: <strong className="text-slate-300 font-mono break-all">{checkInUrl}</strong></span>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
           <span>Single-device session lock active</span>
         </div>
         <div className="font-mono text-[11px] text-slate-400">

@@ -74,29 +74,29 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       ),
     },
     {
-      title: 'Dynamic GPS Geofencing (60m)',
-      subtitle: 'Physical Presence Enforcement',
-      icon: MapPin,
+      title: 'Anti-Proxy Device Lock',
+      subtitle: 'Single Device per Student Policy',
+      icon: Lock,
       color: 'text-cyan-400',
       bgColor: 'bg-cyan-500/10 border-cyan-500/30',
       content: (
         <div className="space-y-3.5 text-xs text-slate-300">
           <p className="leading-relaxed">
-            When the Course Rep initiates a lecture session, their device coordinates define the lecture hall center.
+            Each student must check in using their own personal smartphone. Anti-proxy hardware locking prevents signing in for multiple students.
           </p>
           <div className="p-3 bg-cyan-950/30 rounded-xl border border-cyan-500/30 space-y-2">
             <div className="flex items-center gap-2 text-cyan-300 font-semibold">
-              <MapPin className="w-4 h-4 text-cyan-400" />
-              <span>Mandatory Browser Location</span>
+              <ShieldCheck className="w-4 h-4 text-cyan-400" />
+              <span>Cryptographic Device Binding</span>
             </div>
             <p className="text-[11px] text-slate-300 leading-relaxed">
-              When you submit attendance, your browser calculates your exact distance from the hall using the mathematical Haversine formula.
+              When you record attendance with your JAMB registration number, your device fingerprint is locked to your identity for that lecture session.
             </p>
           </div>
-          <div className="p-3 bg-red-950/30 rounded-xl border border-red-500/30 flex items-start gap-2.5 text-red-200 text-[11px]">
-            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+          <div className="p-3 bg-amber-950/30 rounded-xl border border-amber-500/30 flex items-start gap-2.5 text-amber-200 text-[11px]">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <p>
-              <strong>Strict 60-Meter Threshold:</strong> Submissions from dormitories, cafes, or off-campus locations (&gt; 60m) are automatically rejected and logged into the security audit ledger.
+              <strong>Zero Proxy Tolerance:</strong> Attempting to sign in for a coursemate using the same phone is automatically detected and blocked by the system shield.
             </p>
           </div>
         </div>
@@ -166,22 +166,22 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const Icon = current.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4">
       <div className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl text-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Top Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${current.bgColor} ${current.color}`}>
+        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center shrink-0 ${current.bgColor} ${current.color}`}>
               <Icon className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-base font-bold text-white tracking-tight">{current.title}</h2>
-              <p className="text-xs text-slate-400">{current.subtitle}</p>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate">{current.title}</h2>
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">{current.subtitle}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer shrink-0"
             title="Close Guide"
           >
             <X className="w-5 h-5" />
@@ -207,7 +207,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-4 flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
           {current.content}
         </div>
 

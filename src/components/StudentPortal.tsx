@@ -229,12 +229,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-900 text-slate-100 py-6 px-4 sm:px-6 flex flex-col justify-start items-center">
-      <div className="w-full max-w-md mx-auto space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] w-full max-w-full overflow-x-hidden bg-slate-900 text-slate-100 py-4 sm:py-6 px-3 sm:px-6 flex flex-col justify-start items-center">
+      <div className="w-full max-w-md mx-auto space-y-5 sm:space-y-6">
 
         {/* Live Session Status Banner */}
         {activeSession && activeSession.status === 'active' ? (
-          <div className="bg-slate-950 border border-emerald-500/30 rounded-2xl p-4 shadow-sm">
+          <div className="bg-slate-950 border border-emerald-500/30 rounded-2xl p-3.5 sm:p-4 shadow-sm w-full">
             <div className="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-800">
               <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -284,13 +284,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
 
         {/* Verification Success Pass Card */}
         {resultRecord ? (
-          <div className="bg-slate-950 border border-emerald-500/50 rounded-2xl p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-14 h-14 bg-emerald-500/10 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-400">
-              <CheckCircle2 className="w-8 h-8" />
+          <div className="bg-slate-950 border border-emerald-500/50 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5 animate-in fade-in zoom-in-95 duration-200 w-full overflow-hidden">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/10 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-400">
+              <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="text-xl font-bold text-white tracking-tight">
+              <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                 Attendance Recorded
               </h3>
               <p className="text-xs text-emerald-400 font-medium">
@@ -299,32 +299,32 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             </div>
 
             {/* Student Credential Slip */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2.5 text-xs">
-              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                <span className="text-slate-400">Student Name</span>
-                <span className="font-semibold text-white">{resultRecord.studentName}</span>
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 sm:p-4 space-y-2.5 text-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800 gap-2">
+                <span className="text-slate-400 shrink-0">Student Name</span>
+                <span className="font-semibold text-white text-right truncate">{resultRecord.studentName}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                <span className="text-slate-400">JAMB Reg No</span>
-                <span className="font-mono text-emerald-300 font-semibold">{resultRecord.jambRegNo}</span>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800 gap-2">
+                <span className="text-slate-400 shrink-0">JAMB Reg No</span>
+                <span className="font-mono text-emerald-300 font-semibold text-right">{resultRecord.jambRegNo}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                <span className="text-slate-400">Matric No</span>
-                <span className="font-mono text-slate-200">{resultRecord.matricNo}</span>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800 gap-2">
+                <span className="text-slate-400 shrink-0">Matric No</span>
+                <span className="font-mono text-slate-200 text-right">{resultRecord.matricNo}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                <span className="text-slate-400">Department</span>
-                <span className="text-slate-200">{resultRecord.department}</span>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800 gap-2">
+                <span className="text-slate-400 shrink-0">Department</span>
+                <span className="text-slate-200 text-right truncate">{resultRecord.department}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                <span className="text-slate-400">Timestamp</span>
-                <span className="font-mono tabular-nums text-slate-300">
-                  {new Date(resultRecord.timestamp).toLocaleTimeString()} ({new Date(resultRecord.timestamp).toLocaleDateString()})
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800 gap-2">
+                <span className="text-slate-400 shrink-0">Timestamp</span>
+                <span className="font-mono tabular-nums text-slate-300 text-right text-[11px] sm:text-xs">
+                  {new Date(resultRecord.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({new Date(resultRecord.timestamp).toLocaleDateString()})
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400">Security Hash</span>
-                <span className="font-mono text-[10px] text-slate-500">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400 shrink-0">Security Hash</span>
+                <span className="font-mono text-[10px] text-slate-500 truncate text-right">
                   {resultRecord.id.substring(0, 16)}
                 </span>
               </div>
@@ -368,7 +368,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
           /* Main Check-In Form */
           <form
             onSubmit={handleSubmitCheckIn}
-            className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6"
+            className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5 sm:space-y-6 w-full overflow-hidden"
           >
             <div>
               <div className="flex items-center justify-between">
@@ -533,7 +533,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
               </div>
 
               {/* 4 Segmented Digit Input Boxes */}
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 gap-2 sm:gap-3 w-full">
                 {pinDigits.map((digit, idx) => (
                   <input
                     key={idx}
@@ -546,7 +546,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                     onChange={(e) => handleDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(idx, e)}
                     onPaste={idx === 0 ? handlePastePin : undefined}
-                    className="h-14 text-center text-2xl font-mono font-bold rounded-xl bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 text-emerald-400 transition-colors"
+                    className="h-12 sm:h-14 w-full min-w-0 text-center text-xl sm:text-2xl font-mono font-bold rounded-xl bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 text-emerald-400 transition-colors"
                   />
                 ))}
               </div>

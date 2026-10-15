@@ -90,9 +90,9 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-8 overflow-x-hidden">
       {/* Page Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
@@ -101,10 +101,10 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
               </span>
               <span className="text-xs text-slate-400">· 75% Minimum Attendance Standard</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
               My Course Attendance & Exam Eligibility
             </h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
               Look up your cumulative lecture attendance history across all registered semester courses. Track your attendance percentage against university senate requirements to ensure examination clearance.
             </p>
           </div>
@@ -360,13 +360,13 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
+                      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-4 w-full sm:w-auto">
                         {/* Attendance Metric */}
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <div className="text-xs text-slate-400 font-mono">
                             {course.timesAttended} of {course.totalLecturesHeld} Lectures
                           </div>
-                          <div className="text-base font-bold font-mono flex items-center justify-end gap-1.5">
+                          <div className="text-base font-bold font-mono flex items-center sm:justify-end gap-1.5">
                             <span
                               className={
                                 course.attendanceRate >= 75
@@ -382,7 +382,7 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
                         </div>
 
                         {/* Status Badge */}
-                        <div className="w-32 text-right">
+                        <div className="text-right">
                           {course.statusTier === 'eligible' ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -402,7 +402,7 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
                         </div>
 
                         {/* Chevron */}
-                        <div className="text-slate-400">
+                        <div className="text-slate-400 ml-auto sm:ml-0">
                           {isExpanded ? (
                             <ChevronUp className="w-5 h-5" />
                           ) : (
@@ -428,8 +428,8 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
 
                     {/* Expanded Lecture Sessions Breakdown */}
                     {isExpanded && (
-                      <div className="p-4 sm:p-6 bg-slate-900/40 border-t border-slate-800/80">
-                        <div className="flex items-center justify-between mb-3">
+                      <div className="p-3.5 sm:p-6 bg-slate-900/40 border-t border-slate-800/80 w-full overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                           <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono">
                             Historical Lecture Records ({course.sessions.length} Recorded Sessions)
                           </h4>
@@ -439,7 +439,7 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
                                 e.stopPropagation();
                                 onGoToCheckIn();
                               }}
-                              className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold underline flex items-center gap-1 cursor-pointer"
+                              className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
                             >
                               <span>Current class open: Enter Passcode</span>
                               <ArrowRight className="w-3 h-3" />
@@ -447,7 +447,7 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
                           )}
                         </div>
 
-                        <div className="overflow-x-auto">
+                        <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-800">
                           <table className="w-full text-left text-xs">
                             <thead className="bg-slate-950/80 text-slate-400 uppercase font-mono border-b border-slate-800">
                               <tr>

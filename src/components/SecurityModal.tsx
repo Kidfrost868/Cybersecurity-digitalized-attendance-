@@ -157,47 +157,47 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-white">RUN CyberPass Security & Geofence Shield</h3>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-                  7-Layer Active
+                <h3 className="text-sm sm:text-base font-semibold text-white truncate">RUN CyberPass Security Shield</h3>
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold shrink-0">
+                  Active
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Institutional defense for Redeemer's University Cybersecurity students with 60m GPS Geofencing</p>
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">Anti-Proxy Single-Device Lock & 1-Minute Rotating PINs</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Controls */}
-        <div className="flex border-b border-slate-800 bg-slate-950/50 px-6 gap-4 text-xs font-medium">
+        <div className="flex border-b border-slate-800 bg-slate-950/50 px-3 sm:px-6 gap-3 sm:gap-4 text-xs font-medium overflow-x-auto w-full">
           <button
             onClick={() => setActiveTab('architecture')}
-            className={`py-3 border-b-2 cursor-pointer transition-colors ${
+            className={`py-3 border-b-2 cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'architecture'
                 ? 'border-emerald-400 text-emerald-400 font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            6 Security Guardrails
+            Security Guardrails
           </button>
           <button
             onClick={() => setActiveTab('sandbox')}
-            className={`py-3 border-b-2 cursor-pointer transition-colors ${
+            className={`py-3 border-b-2 cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'sandbox'
                 ? 'border-emerald-400 text-emerald-400 font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -207,7 +207,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
           </button>
           <button
             onClick={() => setActiveTab('audit')}
-            className={`py-3 border-b-2 cursor-pointer transition-colors ${
+            className={`py-3 border-b-2 cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'audit'
                 ? 'border-emerald-400 text-emerald-400 font-semibold'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -218,7 +218,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Body Content */}
-        <div className="p-6 overflow-y-auto space-y-5 flex-1 text-sm">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 flex-1 text-sm">
           {activeTab === 'architecture' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">

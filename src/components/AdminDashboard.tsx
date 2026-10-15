@@ -281,11 +281,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const secsLeft = sessionSecondsLeft % 60;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-900 text-slate-100 py-6 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] w-full max-w-full overflow-x-hidden bg-slate-900 text-slate-100 py-4 sm:py-6 px-3 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 w-full">
 
         {/* Top Header & Fast Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800 w-full">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold block">
@@ -293,7 +293,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </span>
               <span className="text-xs text-slate-400">· Multi-Session Continuity</span>
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               Attendance Command Center
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -301,11 +301,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto">
             {isSessionRunning ? (
               <button
                 onClick={onOpenProjector}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-emerald-950 cursor-pointer"
+                className="px-3.5 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-emerald-950 cursor-pointer"
               >
                 <Monitor className="w-4 h-4" />
                 <span>Open Projector Screen</span>
@@ -313,7 +313,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ) : (
               <button
                 onClick={() => setActiveTab('config')}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-emerald-950 cursor-pointer"
+                className="px-3.5 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg shadow-emerald-950 cursor-pointer"
               >
                 <Play className="w-4 h-4" />
                 <span>Configure & Start Session</span>
@@ -322,7 +322,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               onClick={() => setActiveTab('ledger')}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl text-xs font-medium border border-emerald-500/30 flex items-center gap-2 transition-colors cursor-pointer"
+              className="px-3 sm:px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl text-xs font-medium border border-emerald-500/30 flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>Course Ledgers</span>
@@ -331,25 +331,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <button
               onClick={handleDownloadCsv}
               disabled={records.length === 0}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-2 transition-colors cursor-pointer"
+              className="px-3 sm:px-3.5 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer"
               title="Download attendance list for active lecture"
             >
               <Download className="w-4 h-4 text-emerald-400" />
-              <span>Export Session CSV</span>
+              <span>Export CSV</span>
             </button>
 
             <button
               onClick={onOpenRoster}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-2 transition-colors cursor-pointer"
+              className="px-3 sm:px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer"
             >
               <Users className="w-4 h-4 text-emerald-400" />
-              <span>Master Roster ({students.length})</span>
+              <span>Roster ({students.length})</span>
             </button>
 
             {onLockAdmin && (
               <button
                 onClick={onLockAdmin}
-                className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer ml-auto sm:ml-0"
                 title="Lock Course Rep session"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -488,10 +488,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         )}
 
         {/* Tab Selection */}
-        <div className="flex items-center gap-1 p-1 bg-slate-950 border border-slate-800 rounded-xl max-w-2xl overflow-x-auto">
+        <div className="flex items-center gap-1 p-1 bg-slate-950 border border-slate-800 rounded-xl w-full max-w-full overflow-x-auto">
           <button
             onClick={() => setActiveTab('attendance')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'attendance'
                 ? 'bg-slate-800 text-white shadow-sm font-semibold'
                 : 'text-slate-400 hover:text-white'
@@ -502,7 +502,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <button
             onClick={() => setActiveTab('ledger')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
               activeTab === 'ledger'
                 ? 'bg-emerald-600 text-white shadow-sm font-semibold'
                 : 'text-emerald-400 hover:text-emerald-300'
@@ -514,7 +514,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <button
             onClick={() => setActiveTab('security')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'security'
                 ? 'bg-slate-800 text-white shadow-sm font-semibold'
                 : 'text-slate-400 hover:text-white'
@@ -525,7 +525,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <button
             onClick={() => setActiveTab('config')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'config'
                 ? 'bg-slate-800 text-white shadow-sm font-semibold'
                 : 'text-slate-400 hover:text-white'
@@ -537,15 +537,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* TAB 1: VERIFIED ATTENDANCE LIST (Current Lecture) */}
         {activeTab === 'attendance' && (
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 w-full max-w-full overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800 text-xs">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
                 <span className="font-bold text-white uppercase tracking-wider">
                   Live Attendance Register
                 </span>
-                <span className="text-slate-500">·</span>
+                <span className="hidden sm:inline text-slate-500">·</span>
                 <span className="text-slate-400">
-                  Showing {filteredRecords.length} of {records.length} checked-in students for this lecture
+                  Showing {filteredRecords.length} of {records.length} checked-in students
                 </span>
               </div>
 
@@ -563,7 +563,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-800/80">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[11px] font-mono">
@@ -632,8 +632,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* TAB 3: SECURITY & ANTI-PROXY AUDIT */}
         {activeTab === 'security' && (
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800 text-xs">
               <div>
                 <span className="font-bold text-white uppercase tracking-wider block">
                   Anti-Proxy & Tamper Security Log
@@ -644,14 +644,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
               <button
                 onClick={() => setOverrideModalOpen(true)}
-                className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer self-start sm:self-auto shrink-0"
               >
                 <Unlock className="w-3.5 h-3.5" />
                 <span>Grant Device Exemption</span>
               </button>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-800/80">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[11px] font-mono">

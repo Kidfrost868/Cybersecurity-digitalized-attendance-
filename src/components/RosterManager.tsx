@@ -283,16 +283,16 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
   });
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-900 text-slate-100 py-6 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] w-full max-w-full overflow-x-hidden bg-slate-900 text-slate-100 py-4 sm:py-6 px-3 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 w-full">
 
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800 w-full">
           <div>
             <span className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold block">
               Accredited Student Directory
             </span>
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <GraduationCap className="w-6 h-6 text-emerald-400" />
               Class Registry & JAMB Lookup
             </h1>
@@ -302,10 +302,10 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
           </div>
 
           {/* Action Buttons: Add / Upload CSV / Reset */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
             <button
               onClick={handleOpenAdd}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-3 sm:px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
                 isAdminAuthenticated
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
@@ -318,7 +318,7 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
 
             <button
               onClick={handleOpenUpload}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3 sm:px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
               title={isAdminAuthenticated ? 'Bulk upload CSV roster' : 'Requires Course Rep password'}
             >
               {isAdminAuthenticated ? <Upload className="w-4 h-4 text-emerald-400" /> : <Lock className="w-3.5 h-3.5 text-amber-400" />}
@@ -328,7 +328,7 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
             {isAdminAuthenticated && (
               <button
                 onClick={handleResetToSeed}
-                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3 sm:px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer ml-auto sm:ml-0"
                 title="Reset to default Nigerian CS cohort"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -347,7 +347,7 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
         )}
 
         {/* Table & Search Card */}
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 w-full max-w-full overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800 text-xs">
             <div className="flex items-center gap-2">
               <span className="font-bold text-white uppercase tracking-wider">
@@ -372,7 +372,7 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-800/80">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[11px] font-mono">
