@@ -33,24 +33,17 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
   activeCourseCode,
   initialJambQuery = '',
 }) => {
-  const [searchQuery, setSearchQuery] = useState(initialJambQuery || '202660245646HJ');
+  const [searchQuery, setSearchQuery] = useState(initialJambQuery || '');
   const [isLoading, setIsLoading] = useState(false);
   const [studentData, setStudentData] = useState<StudentSummaryStats | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
 
-  // Quick lookup suggestions for students
-  const quickDemoStudents = [
-    { label: 'Asuelime Mcchris', jamb: '202660245646HJ' },
-    { label: 'Idudu Oghenetekome', jamb: '202660181457IF' },
-    { label: 'Alaba Samuel', jamb: '202660546091HG' },
-    { label: 'Arowoshola Dejola', jamb: 'RUN/CYB/25/18825' },
-  ];
-
   const handleSearch = async (queryToUse?: string) => {
-    const q = (queryToUse || searchQuery).trim().toUpperCase();
+    const q = (queryToUse !== undefined ? queryToUse : searchQuery).trim().toUpperCase();
     if (!q) {
-      setErrorMessage('Please enter a JAMB Registration Number or Matric Number.');
+      setErrorMessage('Please enter your JAMB Registration Number or Matric Number.');
+      setStudentData(null);
       return;
     }
 
@@ -68,7 +61,7 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
       } else {
         setStudentData(null);
         setErrorMessage(
-          res.message || `No attendance record found for "${q}". Please check the registration number.`
+          res.message || `No student found matching "${q}". Please check the registration number or confirm with your Course Rep.`
         );
       }
     } catch {
@@ -78,12 +71,12 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
     }
   };
 
-  // Run initial lookup on mount
+  // Run lookup on mount if an initial query was supplied
   useEffect(() => {
-    if (searchQuery) {
-      handleSearch(searchQuery);
+    if (initialJambQuery && initialJambQuery.trim()) {
+      handleSearch(initialJambQuery);
     }
-  }, []);
+  }, [initialJambQuery]);
 
   const toggleCourseExpand = (courseId: string) => {
     setExpandedCourse(prev => (prev === courseId ? null : courseId));
@@ -160,22 +153,12 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
           </button>
         </form>
 
-        {/* Quick Demo Pickers */}
-        <div className="mt-4 pt-4 border-t border-slate-800/80 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-400 font-medium">Quick Sample Check:</span>
-          {quickDemoStudents.map((demo) => (
-            <button
-              key={demo.jamb}
-              type="button"
-              onClick={() => {
-                setSearchQuery(demo.jamb);
-                handleSearch(demo.jamb);
-              }}
-              className="text-xs px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 border border-slate-800 transition-colors cursor-pointer font-mono"
-            >
-              {demo.label}
-            </button>
-          ))}
+        {/* Helper Guidance */}
+        <div className="mt-3.5 pt-3.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span className="flex items-center gap-1.5 font-medium">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            Enter any accredited JAMB registration number or Matriculation number to inspect lecture attendance.
+          </span>
         </div>
       </div>
 
@@ -241,7 +224,12 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
                 <div className="h-8 w-px bg-slate-800" />
 
                 <div>
-                  {studentData.overallAttendanceRate >= 75 ? (
+                  {studentData.totalClassesHeld === 0 ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      In Good Standing (No Absences)
+                    </span>
+                  ) : studentData.overallAttendanceRate >= 75 ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       Exam Cleared
@@ -311,10 +299,15 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
               </span>
             </div>
 
-            <div className="space-y-4">
-              {studentData.courses.map((course) => {
-                const isExpanded = expandedCourse === course.courseId;
-                const isLiveNow = activeCourseCode?.toUpperCase() === course.courseCode.toUpperCase();
+            {studentData.courses.length === 0 ? (
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 text-center text-xs text-slate-400">
+                No semester courses are currently registered in the attendance ledger. The Course Rep can register courses in the Course Ledger or start an attendance session.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {studentData.courses.map((course) => {
+                  const isExpanded = expandedCourse === course.courseId;
+                  const isLiveNow = activeCourseCode?.toUpperCase() === course.courseCode.toUpperCase();
 
                 return (
                   <div
@@ -532,6 +525,26 @@ export const StudentAttendanceStats: React.FC<StudentAttendanceStatsProps> = ({
                 );
               })}
             </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Initial State / Welcome Prompt */}
+      {!studentData && !errorMessage && !isLoading && (
+        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center max-w-xl mx-auto space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
+            <GraduationCap className="w-7 h-7" />
+          </div>
+          <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            Personal Lecture Attendance Lookup
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            Enter your JAMB Registration Number or Matriculation Number in the search bar above to look up your personal semester lecture attendance history, course-by-course breakdown, and senate 75% exam clearance status.
+          </p>
+          <div className="pt-2 flex items-center justify-center gap-2 text-xs text-slate-500">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Redeemer's University Academic Compliance System</span>
           </div>
         </div>
       )}

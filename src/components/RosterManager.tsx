@@ -47,6 +47,12 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
   const [newMatric, setNewMatric] = useState('');
   const [newDepartment, setNewDepartment] = useState('Cybersecurity');
   const [newLevel, setNewLevel] = useState('100L');
+  const [addError, setAddError] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+
+  // Wipe Roster State
+  const [isWipeModalOpen, setIsWipeModalOpen] = useState(false);
+  const [isWiping, setIsWiping] = useState(false);
 
   // Edit Student State
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -80,6 +86,7 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
       onRequireAdminAuth();
       return;
     }
+    setAddError(null);
     setIsAddModalOpen(true);
   };
 
@@ -91,39 +98,60 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
     setIsUploadModalOpen(true);
   };
 
-  const handleResetToSeed = async () => {
+  const handleWipeRoster = async () => {
     if (!isAdminAuthenticated) {
       onRequireAdminAuth();
       return;
     }
-    if (!confirm('Reset the master student list back to the default Nigerian university cohort?')) return;
-    const defaultList = await AttendanceApiService.resetStudents();
-    setStudents(defaultList);
-    setNotification('Roster reset to default accredited 25-student CS cohort.');
-    setTimeout(() => setNotification(null), 3000);
+    setIsWiping(true);
+    try {
+      await AttendanceApiService.wipeAllStudents();
+      setStudents([]);
+      setNotification('Entire roster wiped clean. All student names and records taken off the database.');
+      setIsWipeModalOpen(false);
+      setTimeout(() => setNotification(null), 3500);
+    } catch {
+      alert('Failed to wipe roster. Please try again.');
+    } finally {
+      setIsWiping(false);
+    }
   };
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newJamb.trim() || !newName.trim()) return;
+    setAddError(null);
+    if (!newJamb.trim() || !newName.trim()) {
+      setAddError('JAMB Number and Student Full Name are required.');
+      return;
+    }
 
+    setIsAdding(true);
     try {
-      await AttendanceApiService.addStudent({
+      const res = await AttendanceApiService.addStudent({
         jambRegNo: newJamb.trim().toUpperCase(),
         fullName: newName.trim(),
-        matricNo: newMatric.trim().toUpperCase() || `RUN/CYB/2021/${Math.floor(100 + Math.random() * 900)}`,
+        matricNo: newMatric.trim().toUpperCase() || `RUN/CYB/2026/${Math.floor(100 + Math.random() * 900)}`,
         department: newDepartment.trim() || 'Cybersecurity',
         level: newLevel.trim(),
       });
-      setNotification(`Added ${newName.trim()} to accredited roster.`);
-      setIsAddModalOpen(false);
-      setNewJamb('');
-      setNewName('');
-      setNewMatric('');
-      loadStudents();
-      setTimeout(() => setNotification(null), 3000);
-    } catch {
-      // Error
+
+      if (res.success && res.student) {
+        setNotification(`Added "${res.student.fullName}" to the roster.`);
+        setIsAddModalOpen(false);
+        setNewJamb('');
+        setNewName('');
+        setNewMatric('');
+        setAddError(null);
+        await loadStudents();
+        setTimeout(() => setNotification(null), 3500);
+      } else {
+        setAddError(res.error || 'Failed to add student. Please verify the JAMB number.');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Network error adding student';
+      setAddError(msg);
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -325,16 +353,20 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
               <span>Upload CSV {isAdminAuthenticated ? '' : '(Rep)'}</span>
             </button>
 
-            {isAdminAuthenticated && (
-              <button
-                onClick={handleResetToSeed}
-                className="px-3 sm:px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer ml-auto sm:ml-0"
-                title="Reset to default Nigerian CS cohort"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Reset Cohort</span>
-              </button>
-            )}
+            <button
+              onClick={() => {
+                if (!isAdminAuthenticated) {
+                  onRequireAdminAuth();
+                  return;
+                }
+                setIsWipeModalOpen(true);
+              }}
+              className="px-3 sm:px-3.5 py-2 bg-slate-900 hover:bg-rose-950/70 text-rose-300 hover:text-rose-200 rounded-xl text-xs font-medium border border-rose-500/30 hover:border-rose-500/60 flex items-center gap-1.5 transition-colors cursor-pointer ml-auto sm:ml-0"
+              title="Wipe all names from the student database"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <span>Wipe Roster</span>
+            </button>
           </div>
         </div>
 
@@ -456,8 +488,40 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-500 text-xs">
-                      No students found matching "{searchQuery}". Try searching by first name or JAMB number.
+                    <td colSpan={7} className="py-12 px-4 text-center">
+                      {students.length === 0 ? (
+                        <div className="max-w-md mx-auto space-y-3 py-4">
+                          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
+                            <GraduationCap className="w-6 h-6" />
+                          </div>
+                          <h3 className="text-base font-bold text-white">Student Roster is Clean & Empty</h3>
+                          <p className="text-xs text-slate-400 leading-relaxed">
+                            All previous names have been wiped from the database. Click "+ Add Student" below to enroll your class cohort, or import via CSV.
+                          </p>
+                          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+                            <button
+                              type="button"
+                              onClick={handleOpenAdd}
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
+                            >
+                              <Plus className="w-4 h-4" />
+                              <span>Add New Student</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleOpenUpload}
+                              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <Upload className="w-4 h-4 text-emerald-400" />
+                              <span>Upload CSV</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-500 text-xs">
+                          No students found matching "{searchQuery}". Try searching by first name or JAMB number.
+                        </span>
+                      )}
                     </td>
                   </tr>
                 )}
@@ -473,7 +537,7 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <form
             onSubmit={handleAddStudent}
-            className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl"
+            className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
           >
             <div className="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-800">
               <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -483,11 +547,18 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-900 cursor-pointer"
               >
                 ✕
               </button>
             </div>
+
+            {addError && (
+              <div className="p-3 bg-rose-950/60 border border-rose-500/50 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span>{addError}</span>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-300">
@@ -496,8 +567,11 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
               <input
                 type="text"
                 value={newJamb}
-                onChange={(e) => setNewJamb(e.target.value.toUpperCase())}
-                placeholder="e.g. 2024/104829AB"
+                onChange={(e) => {
+                  setNewJamb(e.target.value.toUpperCase());
+                  setAddError(null);
+                }}
+                placeholder="e.g. 202660245646HJ or RUN/CYB/25/18825"
                 required
                 className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-emerald-500 uppercase"
               />
@@ -510,8 +584,11 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
               <input
                 type="text"
                 value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. Chioma Grace Okafor"
+                onChange={(e) => {
+                  setNewName(e.target.value);
+                  setAddError(null);
+                }}
+                placeholder="e.g. Asuelime Mcchris"
                 required
                 className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
               />
@@ -520,13 +597,13 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300">
-                  Matric Number
+                  Matric Number (Optional)
                 </label>
                 <input
                   type="text"
                   value={newMatric}
                   onChange={(e) => setNewMatric(e.target.value.toUpperCase())}
-                  placeholder="e.g. RUN/CYB/2021/001"
+                  placeholder="e.g. RUN/CYB/2026/001"
                   className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-emerald-500 uppercase"
                 />
               </div>
@@ -552,19 +629,66 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
             <div className="pt-2 flex gap-2.5">
               <button
                 type="submit"
-                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                disabled={isAdding}
+                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
-                Enroll to Class List
+                {isAdding ? (
+                  <span>Enrolling Student...</span>
+                ) : (
+                  <>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Enroll to Class List</span>
+                  </>
+                )}
               </button>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
               >
                 Cancel
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* MODAL: WIPE ROSTER CONFIRMATION (Protected) */}
+      {isWipeModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-950 border border-rose-500/50 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in duration-150">
+            <div className="flex items-center gap-2.5 text-rose-400">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              <h3 className="font-bold text-white text-sm">Wipe All Student Names?</h3>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              This will completely wipe every present student name from the database and clear all attendance records. The database will become completely clean.
+            </p>
+
+            <div className="p-3 bg-rose-950/40 border border-rose-500/40 rounded-xl text-[11px] text-rose-200">
+              Warning: This action is permanent and clears all {students.length} student records from the server database.
+            </div>
+
+            <div className="pt-2 flex gap-2.5">
+              <button
+                type="button"
+                onClick={handleWipeRoster}
+                disabled={isWiping}
+                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isWiping ? 'Wiping Roster...' : 'Yes, Wipe Everything Clean'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsWipeModalOpen(false)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -161,25 +161,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     }
   };
 
-  // Real Student Quick Selector
-  const demoStudents = [
-    { name: 'Asuelime Mcchris', jamb: '202660245646HJ' },
-    { name: 'Idudu Oghenetekome Favour', jamb: '202660181457IF' },
-    { name: 'Alaba Samuel Oluwatumininu', jamb: '202660546091HG' },
-    { name: 'Arowoshola Dejola', jamb: 'RUN/CYB/25/18825' },
-    { name: 'Joshua Jeremiah', jamb: '202660045223BB' },
-  ];
-
-  const handleSelectDemo = (jamb: string) => {
-    setJambRegNo(jamb);
-    setErrorMessage(null);
-    setErrorCode(null);
-    // Focus first PIN box
-    setTimeout(() => {
-      digitInputRefs[0].current?.focus();
-    }, 150);
-  };
-
   // Form Submission with 1-Minute Passcode & Single-Device Anti-Proxy Verification
   const handleSubmitCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -484,40 +465,19 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 </div>
               )}
 
-              {/* Fast Test Student Picker */}
-              <div className="pt-1">
-                <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1.5">
-                  <span className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-emerald-400" />
-                    Quick-select demo student:
-                  </span>
-                  {onGoToDirectory && (
-                    <button
-                      type="button"
-                      onClick={onGoToDirectory}
-                      className="text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer"
-                    >
-                      Find JAMB in Directory →
-                    </button>
-                  )}
+              {/* Directory Finder Link */}
+              {onGoToDirectory && (
+                <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Need to confirm your accredited JAMB number?</span>
+                  <button
+                    type="button"
+                    onClick={onGoToDirectory}
+                    className="text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer"
+                  >
+                    Check Student Directory →
+                  </button>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {demoStudents.map((st) => (
-                    <button
-                      key={st.jamb}
-                      type="button"
-                      onClick={() => handleSelectDemo(st.jamb)}
-                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                        jambRegNo === st.jamb
-                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
-                      }`}
-                    >
-                      {st.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
 
             {/* 4-Digit Live Passcode Field */}

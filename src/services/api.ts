@@ -342,8 +342,9 @@ export class AttendanceApiService {
 
   // Lookup student name by JAMB
   static async lookupStudent(jamb: string): Promise<{ found: boolean; student?: Partial<Student> }> {
+    const clean = jamb.trim().toUpperCase();
     try {
-      const res = await fetch(`/api/students/lookup/${encodeURIComponent(jamb.trim().toUpperCase())}`);
+      const res = await fetch(`/api/students/lookup?jamb=${encodeURIComponent(clean)}`);
       if (res.ok) {
         return await res.json();
       }
@@ -351,8 +352,7 @@ export class AttendanceApiService {
       // Local fallback
     }
 
-    const students = getStored<Student[]>('students', SEED_STUDENTS);
-    const clean = jamb.trim().toUpperCase();
+    const students = getStored<Student[]>('students', []);
     const student = students.find(s => s.jambRegNo.toUpperCase() === clean || s.matricNo.toUpperCase() === clean);
     if (!student) return { found: false };
     return {
@@ -523,8 +523,9 @@ export class AttendanceApiService {
 
   // Get Student Personal Attendance Analytics (Public for student lookup)
   static async getStudentStats(jambOrMatric: string): Promise<{ found: boolean; stats?: StudentSummaryStats; message?: string }> {
+    const clean = jambOrMatric.trim().toUpperCase();
     try {
-      const res = await fetch(`/api/student/stats/${encodeURIComponent(jambOrMatric.trim().toUpperCase())}`);
+      const res = await fetch(`/api/student/stats?jamb=${encodeURIComponent(clean)}`);
       return await res.json();
     } catch {
       return { found: false, message: 'Unable to connect to server. Please try again.' };
@@ -555,12 +556,15 @@ export class AttendanceApiService {
       const res = await fetch('/api/students');
       if (res.ok) {
         const json = await res.json();
-        return json.students;
+        if (Array.isArray(json.students)) {
+          setStored('students', json.students);
+          return json.students;
+        }
       }
     } catch {
       // Fallback
     }
-    return getStored<Student[]>('students', SEED_STUDENTS);
+    return getStored<Student[]>('students', []);
   }
 
   // Add individual student
@@ -572,11 +576,34 @@ export class AttendanceApiService {
         body: JSON.stringify(studentData),
       });
       const data = await res.json();
-      if (res.ok && data.success) {
+      if (res.ok && data.success && data.student) {
+        const current = getStored<Student[]>('students', []);
+        const cleanJamb = data.student.jambRegNo.toUpperCase();
+        if (!current.some(s => s.jambRegNo.toUpperCase() === cleanJamb)) {
+          setStored('students', [...current, data.student]);
+        }
         return data;
       }
-      return { success: false, error: data.error || 'Failed to add student' };
+      return { success: false, error: data.error || 'Failed to add student to directory' };
     } catch {
+      // Fallback in case of temporary network issue
+      if (studentData.jambRegNo && studentData.fullName) {
+        const current = getStored<Student[]>('students', []);
+        const cleanJamb = studentData.jambRegNo.trim().toUpperCase();
+        if (current.some(s => s.jambRegNo.toUpperCase() === cleanJamb)) {
+          return { success: false, error: `Student with JAMB "${cleanJamb}" already exists.` };
+        }
+        const newStudent: Student = {
+          jambRegNo: cleanJamb,
+          fullName: studentData.fullName.trim(),
+          matricNo: studentData.matricNo?.trim().toUpperCase() || `RUN/CYB/2026/${Math.floor(100 + Math.random() * 900)}`,
+          department: studentData.department || 'Cybersecurity',
+          level: studentData.level || '100L',
+          createdAt: Date.now(),
+        };
+        setStored('students', [...current, newStudent]);
+        return { success: true, student: newStudent };
+      }
       return { success: false, error: 'Network error adding student' };
     }
   }
@@ -591,6 +618,9 @@ export class AttendanceApiService {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        // Refresh local cache
+        const refreshed = await this.getStudents();
+        setStored('students', refreshed);
         return data;
       }
       return { success: false, addedCount: 0, error: data.error };
@@ -601,13 +631,18 @@ export class AttendanceApiService {
 
   // Update student (Edit)
   static async updateStudent(jambRegNo: string, updatedData: Partial<Student>): Promise<{ success: boolean; student?: Student; error?: string }> {
+    const cleanJamb = jambRegNo.trim().toUpperCase();
     try {
-      const res = await fetch(`/api/students/${encodeURIComponent(jambRegNo)}`, {
+      const res = await fetch(`/api/students?jamb=${encodeURIComponent(cleanJamb)}`, {
         method: 'PUT',
         headers: this.getAdminAuthHeaders(),
         body: JSON.stringify(updatedData),
       });
       const data = await res.json();
+      if (data.success && data.student) {
+        const current = getStored<Student[]>('students', []);
+        setStored('students', current.map(s => (s.jambRegNo.toUpperCase() === cleanJamb ? data.student! : s)));
+      }
       return data;
     } catch {
       return { success: false, error: 'Network error updating student' };
@@ -616,45 +651,40 @@ export class AttendanceApiService {
 
   // Delete student
   static async deleteStudent(jambRegNo: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const cleanJamb = jambRegNo.trim().toUpperCase();
     try {
-      const res = await fetch(`/api/students/${encodeURIComponent(jambRegNo)}`, {
+      const res = await fetch(`/api/students?jamb=${encodeURIComponent(cleanJamb)}`, {
         method: 'DELETE',
         headers: this.getAdminAuthHeaders(),
       });
       const data = await res.json();
+      if (data.success) {
+        const current = getStored<Student[]>('students', []);
+        setStored('students', current.filter(s => s.jambRegNo.toUpperCase() !== cleanJamb && s.matricNo.toUpperCase() !== cleanJamb));
+      }
       return data;
     } catch {
-      return { success: false, error: 'Network error deleting student' };
+      // Local storage fallback removal
+      const current = getStored<Student[]>('students', []);
+      setStored('students', current.filter(s => s.jambRegNo.toUpperCase() !== cleanJamb && s.matricNo.toUpperCase() !== cleanJamb));
+      return { success: true, message: `Student removed from roster.` };
     }
   }
 
-  // Create course
-  static async createCourse(courseData: Partial<Course>): Promise<{ success: boolean; course?: Course; error?: string }> {
+  // Wipe All Students (Completely clean slate)
+  static async wipeAllStudents(): Promise<boolean> {
     try {
-      const res = await fetch('/api/courses', {
+      await fetch('/api/students/wipe', {
         method: 'POST',
         headers: this.getAdminAuthHeaders(),
-        body: JSON.stringify(courseData),
       });
-      const data = await res.json();
-      return data;
     } catch {
-      return { success: false, error: 'Network error creating course' };
+      // Fallback
     }
-  }
-
-  // Delete course
-  static async deleteCourse(courseId: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    try {
-      const res = await fetch(`/api/courses/${encodeURIComponent(courseId)}`, {
-        method: 'DELETE',
-        headers: this.getAdminAuthHeaders(),
-      });
-      const data = await res.json();
-      return data;
-    } catch {
-      return { success: false, error: 'Network error deleting course' };
-    }
+    setStored('students', []);
+    setStored('records', []);
+    setStored('device_locks', {});
+    return true;
   }
 
   // Reset student roster
@@ -667,8 +697,8 @@ export class AttendanceApiService {
     } catch {
       // Fallback
     }
-    setStored('students', SEED_STUDENTS);
-    return SEED_STUDENTS;
+    setStored('students', []);
+    return [];
   }
 
   // Override device lock

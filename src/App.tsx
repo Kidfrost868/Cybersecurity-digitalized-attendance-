@@ -20,12 +20,19 @@ export default function App() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState<boolean>(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [selectedJambForCheckIn, setSelectedJambForCheckIn] = useState<string>('');
-  const [selectedJambForStats, setSelectedJambForStats] = useState<string>('202660245646HJ');
+  const [selectedJambForStats, setSelectedJambForStats] = useState<string>('');
+  const [targetTabAfterLogin, setTargetTabAfterLogin] = useState<ActiveTab | null>(null);
 
-  // Check existing session auth and first-visit onboarding on initial mount
+  // Check existing session auth, wipe legacy mock students, and first-visit onboarding on initial mount
   useEffect(() => {
     setIsAdminAuthenticated(AttendanceApiService.isAdminAuthenticated());
     try {
+      // Clear legacy mock seed names from browser localStorage so database starts completely clean
+      const stored = localStorage.getItem('unipass_students');
+      if (stored && (stored.includes('Asuelime') || stored.includes('202660245646HJ') || stored.includes('Mcchris'))) {
+        localStorage.removeItem('unipass_students');
+      }
+
       const seen = localStorage.getItem('run_cyberpass_onboarding_seen');
       if (!seen) {
         setIsOnboardingOpen(true);
@@ -66,10 +73,15 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleRequireAdminAuth = (target?: ActiveTab) => {
+    setTargetTabAfterLogin(target || activeTab);
+    setIsLoginModalOpen(true);
+  };
+
   // Tab change handler: only Course Rep Hub requires password authentication
   const handleTabChange = (tab: ActiveTab) => {
     if (tab === 'admin' && !isAdminAuthenticated) {
-      setIsLoginModalOpen(true);
+      handleRequireAdminAuth('admin');
       return;
     }
     setActiveTab(tab);
@@ -78,7 +90,12 @@ export default function App() {
   const handleLoginSuccess = () => {
     setIsAdminAuthenticated(true);
     setIsLoginModalOpen(false);
-    setActiveTab('admin');
+    if (targetTabAfterLogin) {
+      setActiveTab(targetTabAfterLogin);
+      setTargetTabAfterLogin(null);
+    } else {
+      setActiveTab('admin');
+    }
   };
 
   const handleAdminLogout = () => {
@@ -146,7 +163,7 @@ export default function App() {
           <RosterManager
             onBackToDashboard={() => setActiveTab(isAdminAuthenticated ? 'admin' : 'student')}
             isAdminAuthenticated={isAdminAuthenticated}
-            onRequireAdminAuth={() => setIsLoginModalOpen(true)}
+            onRequireAdminAuth={() => handleRequireAdminAuth('roster')}
             onSelectStudentForCheckIn={handleSelectStudentForCheckIn}
           />
         )}

@@ -34,8 +34,8 @@ function getPasscodeForInterval(sessionId: string, intervalIndex: number): strin
   return codeNum.toString();
 }
 
-// In-Memory Database Store
-let masterStudents: Student[] = [...SEED_STUDENTS];
+// In-Memory Database Store - completely clean per user request
+let masterStudents: Student[] = [];
 
 // Redeemer's University Ede Campus Baseline GPS Coordinates (Main Campus, Osun State)
 const DEFAULT_RUN_LAT = 7.6983;
@@ -107,17 +107,17 @@ function getSessionState() {
 }
 
 // Security Input Sanitization Helpers
-function sanitizeText(val: unknown, maxLen = 80): string {
+function sanitizeText(val: unknown, maxLen = 100): string {
   if (typeof val !== 'string') return '';
   return val
     .replace(/<[^>]*>/g, '') // Strip HTML tags
-    .replace(/[^\w\s.,\-/@()&]/gi, '') // Allow safe alphanumeric and standard punctuation
+    .replace(/[^\w\s.,\-/@()&']/gi, '') // Allow safe alphanumeric, standard punctuation and apostrophe
     .trim()
     .slice(0, maxLen);
 }
 
 function isValidJamb(jamb: string): boolean {
-  return /^[A-Za-z0-9/.\s-]{5,32}$/.test(jamb.trim());
+  return /^[A-Za-z0-9/.\s-]{2,40}$/.test(jamb.trim());
 }
 
 function isValidPasscode(code: string): boolean {
@@ -650,18 +650,36 @@ async function startServer() {
     });
   });
 
-  // 7. Student Lookup by JAMB / Matric
-  app.get('/api/students/lookup/:jamb', (req, res) => {
-    const raw = req.params.jamb.trim();
-    if (!isValidJamb(raw)) {
-      return res.status(400).json({ found: false, message: 'Invalid format' });
+  // Helper to extract student query from req (wildcard param, path param, query, or body)
+  function extractStudentQuery(req: express.Request): string {
+    const raw = (
+      req.query.jamb ||
+      req.query.matric ||
+      req.query.q ||
+      req.body?.jambRegNo ||
+      req.body?.jamb ||
+      req.params.jamb ||
+      (req.params as Record<string, string>)[0] ||
+      ''
+    ).toString();
+    try {
+      return decodeURIComponent(raw).trim().toUpperCase();
+    } catch {
+      return raw.trim().toUpperCase();
     }
-    const query = raw.toUpperCase();
+  }
+
+  // 7. Student Lookup by JAMB / Matric (Handles slashes like RUN/CYB/25/18825)
+  const handleStudentLookup = (req: express.Request, res: express.Response) => {
+    const query = extractStudentQuery(req);
+    if (!query || !isValidJamb(query)) {
+      return res.status(400).json({ found: false, message: 'Invalid registration format' });
+    }
     const student = masterStudents.find(
       s => s.jambRegNo.toUpperCase() === query || s.matricNo.toUpperCase() === query
     );
     if (!student) {
-      return res.status(404).json({ found: false });
+      return res.status(404).json({ found: false, message: `No student found for "${query}"` });
     }
     return res.json({
       found: true,
@@ -673,7 +691,9 @@ async function startServer() {
         level: student.level,
       },
     });
-  });
+  };
+  app.get('/api/students/lookup', handleStudentLookup);
+  app.get('/api/students/lookup/*', handleStudentLookup);
 
   // 8. Public Read-Only Student Directory
   app.get('/api/students', (_req, res) => {
@@ -684,27 +704,28 @@ async function startServer() {
   app.post('/api/students', requireAdminAuth, (req, res) => {
     const { jambRegNo, fullName, matricNo, department, level } = req.body;
     if (!jambRegNo || !fullName) {
-      return res.status(400).json({ error: 'JAMB number and Full Name are required.' });
+      return res.status(400).json({ success: false, error: 'JAMB number and Full Name are required.' });
     }
 
-    const cleanJamb = sanitizeText(jambRegNo, 20).toUpperCase();
-    const cleanName = sanitizeText(fullName, 80);
+    const cleanJamb = sanitizeText(jambRegNo, 35).toUpperCase();
+    const cleanName = sanitizeText(fullName, 100);
 
     if (!isValidJamb(cleanJamb)) {
-      return res.status(400).json({ error: 'Invalid JAMB format.' });
+      return res.status(400).json({ success: false, error: 'Invalid JAMB format. Must be 2 to 40 characters.' });
     }
 
     const existing = masterStudents.find(s => s.jambRegNo.toUpperCase() === cleanJamb);
     if (existing) {
-      return res.status(409).json({ error: 'Student with this JAMB Reg No already exists.' });
+      return res.status(409).json({ success: false, error: `Student with JAMB "${cleanJamb}" already exists on the roster (${existing.fullName}).` });
     }
 
+    const cleanMatric = matricNo ? sanitizeText(matricNo, 35).toUpperCase() : `RUN/CYB/2026/${Math.floor(100 + Math.random() * 900)}`;
     const newStudent: Student = {
       jambRegNo: cleanJamb,
       fullName: cleanName,
-      matricNo: matricNo ? sanitizeText(matricNo, 20).toUpperCase() : `RUN/CYB/2021/${Date.now().toString().slice(-3)}`,
-      department: department ? sanitizeText(department, 40) : 'Cybersecurity',
-      level: level ? sanitizeText(level, 10) : '400L',
+      matricNo: cleanMatric,
+      department: department ? sanitizeText(department, 50) : 'Cybersecurity',
+      level: level ? sanitizeText(level, 15) : '100L',
       createdAt: Date.now(),
     };
 
@@ -716,20 +737,20 @@ async function startServer() {
   app.post('/api/students/bulk', requireAdminAuth, (req, res) => {
     const { students } = req.body;
     if (!Array.isArray(students)) {
-      return res.status(400).json({ error: 'Students array required' });
+      return res.status(400).json({ success: false, error: 'Students array required' });
     }
 
     let addedCount = 0;
     for (const item of students) {
       if (item.jambRegNo && item.fullName) {
-        const cleanJamb = sanitizeText(item.jambRegNo, 20).toUpperCase();
+        const cleanJamb = sanitizeText(item.jambRegNo, 35).toUpperCase();
         if (isValidJamb(cleanJamb) && !masterStudents.some(s => s.jambRegNo.toUpperCase() === cleanJamb)) {
           masterStudents.push({
             jambRegNo: cleanJamb,
-            fullName: sanitizeText(item.fullName, 80),
-            matricNo: item.matricNo ? sanitizeText(item.matricNo, 25).toUpperCase() : `RUN/CYB/2026/${Math.floor(100 + Math.random() * 900)}`,
-            department: item.department ? sanitizeText(item.department, 40) : 'Cybersecurity',
-            level: item.level ? sanitizeText(item.level, 10) : '100L',
+            fullName: sanitizeText(item.fullName, 100),
+            matricNo: item.matricNo ? sanitizeText(item.matricNo, 35).toUpperCase() : `RUN/CYB/2026/${Math.floor(100 + Math.random() * 900)}`,
+            department: item.department ? sanitizeText(item.department, 50) : 'Cybersecurity',
+            level: item.level ? sanitizeText(item.level, 15) : '100L',
             createdAt: Date.now(),
           });
           addedCount++;
@@ -740,57 +761,81 @@ async function startServer() {
     return res.json({ success: true, addedCount, total: masterStudents.length });
   });
 
-  // 10b. Update / Edit Student (Course Rep Only)
-  app.put('/api/students/:jamb', requireAdminAuth, (req, res) => {
-    const rawJamb = decodeURIComponent(req.params.jamb).trim().toUpperCase();
+  // 10b. Update / Edit Student (Course Rep Only - Handles slashes)
+  const handleUpdateStudent = (req: express.Request, res: express.Response) => {
+    const rawJamb = extractStudentQuery(req);
     const student = masterStudents.find(
       s => s.jambRegNo.toUpperCase() === rawJamb || s.matricNo.toUpperCase() === rawJamb
     );
     if (!student) {
-      return res.status(404).json({ success: false, error: 'Student not found in master roster.' });
+      return res.status(404).json({ success: false, error: `Student "${rawJamb}" not found in master roster.` });
     }
 
     const { fullName, matricNo, department, level, jambRegNo } = req.body;
     if (fullName) {
-      student.fullName = sanitizeText(fullName, 80);
+      student.fullName = sanitizeText(fullName, 100);
     }
     if (matricNo) {
-      student.matricNo = sanitizeText(matricNo, 25).toUpperCase();
+      student.matricNo = sanitizeText(matricNo, 35).toUpperCase();
     }
     if (department) {
       student.department = sanitizeText(department, 50);
     }
     if (level) {
-      student.level = sanitizeText(level, 10);
+      student.level = sanitizeText(level, 15);
     }
     if (jambRegNo) {
-      const cleanNewJamb = sanitizeText(jambRegNo, 25).toUpperCase();
+      const cleanNewJamb = sanitizeText(jambRegNo, 35).toUpperCase();
       if (isValidJamb(cleanNewJamb)) {
         student.jambRegNo = cleanNewJamb;
       }
     }
 
     return res.json({ success: true, student });
-  });
+  };
+  app.put('/api/students', requireAdminAuth, handleUpdateStudent);
+  app.put('/api/students/*', requireAdminAuth, handleUpdateStudent);
 
-  // 10c. Delete Student (Course Rep Only)
-  app.delete('/api/students/:jamb', requireAdminAuth, (req, res) => {
-    const rawJamb = decodeURIComponent(req.params.jamb).trim().toUpperCase();
+  // 10c. Delete Student (Course Rep Only - Handles slashes like RUN/CYB/25/18825)
+  const handleDeleteStudent = (req: express.Request, res: express.Response) => {
+    const rawJamb = extractStudentQuery(req);
+    if (!rawJamb) {
+      return res.status(400).json({ success: false, error: 'Student registration identifier is required.' });
+    }
+
     const index = masterStudents.findIndex(
       s => s.jambRegNo.toUpperCase() === rawJamb || s.matricNo.toUpperCase() === rawJamb
     );
     if (index === -1) {
-      return res.status(404).json({ success: false, error: 'Student not found in master roster.' });
+      return res.status(404).json({ success: false, error: `Student "${rawJamb}" not found in master roster.` });
     }
 
     const deletedStudent = masterStudents.splice(index, 1)[0];
+    // Remove attendance records for clean state
+    attendanceRecords = attendanceRecords.filter(r => r.jambRegNo.toUpperCase() !== deletedStudent.jambRegNo.toUpperCase());
     return res.json({ success: true, message: `Student ${deletedStudent.fullName} removed from roster.`, student: deletedStudent });
+  };
+  app.delete('/api/students', requireAdminAuth, handleDeleteStudent);
+  app.delete('/api/students/*', requireAdminAuth, handleDeleteStudent);
+
+  // 11. Wipe Entire Roster (Course Rep Only - Clean Slate)
+  app.post('/api/students/wipe', requireAdminAuth, (_req, res) => {
+    masterStudents = [];
+    attendanceRecords = [];
+    flaggedAttempts = [];
+    deviceLocks.clear();
+    hardwareLocks.clear();
+    return res.json({ success: true, count: 0, message: 'All student names and records have been completely wiped from the database.' });
   });
 
-  // 11. Reset Student Roster (Course Rep Only)
+  // 11b. Reset Student Roster (Resets to clean empty roster)
   app.post('/api/students/reset', requireAdminAuth, (_req, res) => {
-    masterStudents = [...SEED_STUDENTS];
-    return res.json({ success: true, count: masterStudents.length });
+    masterStudents = [];
+    attendanceRecords = [];
+    flaggedAttempts = [];
+    deviceLocks.clear();
+    hardwareLocks.clear();
+    return res.json({ success: true, count: 0, message: 'Roster reset to clean database.' });
   });
 
   // 12. List Registered Courses with Session Counts
@@ -954,8 +999,15 @@ async function startServer() {
   });
 
   // 14. Student Personal Attendance & Course Statistics (Public lookup for "My Attendance")
-  app.get('/api/student/stats/:jambOrMatric', (req, res) => {
-    const raw = req.params.jambOrMatric.trim().toUpperCase();
+  const handleStudentStats = (req: express.Request, res: express.Response) => {
+    const raw = extractStudentQuery(req);
+    if (!raw) {
+      return res.status(400).json({
+        found: false,
+        message: 'Student JAMB Registration Number or Matric Number is required.',
+      });
+    }
+
     const student = masterStudents.find(
       s => s.jambRegNo.toUpperCase() === raw || s.matricNo.toUpperCase() === raw
     );
@@ -963,7 +1015,7 @@ async function startServer() {
     if (!student) {
       return res.status(404).json({
         found: false,
-        message: `No student found matching "${raw}". Please verify your JAMB registration or Matriculation number.`,
+        message: `No student found matching "${raw}". Please verify your registration number or check the Student Directory.`,
       });
     }
 
@@ -972,7 +1024,39 @@ async function startServer() {
     let totalClassesAttended = 0;
     let eligibleCoursesCount = 0;
 
-    const courseStatsList: StudentCourseStats[] = masterCourses.map(course => {
+    // Collect all relevant courses (registered master courses plus any active/completed session courses)
+    const allCourseMap = new Map<string, Course>();
+    masterCourses.forEach(c => allCourseMap.set(c.code.toUpperCase(), c));
+    completedSessions.forEach(s => {
+      if (!allCourseMap.has(s.courseCode.toUpperCase())) {
+        allCourseMap.set(s.courseCode.toUpperCase(), {
+          id: s.courseId || 'course-' + s.courseCode.toLowerCase().replace(/[^a-z0-9]/g, ''),
+          code: s.courseCode,
+          title: s.courseTitle,
+          lecturerName: s.lecturerName,
+          hallLocation: s.hallLocation,
+          department: 'Cybersecurity',
+          totalLectures: 0,
+          createdAt: s.startTime,
+        });
+      }
+    });
+    if (liveSession && !allCourseMap.has(liveSession.courseCode.toUpperCase())) {
+      allCourseMap.set(liveSession.courseCode.toUpperCase(), {
+        id: liveSession.courseId || 'course-' + liveSession.courseCode.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        code: liveSession.courseCode,
+        title: liveSession.courseTitle,
+        lecturerName: liveSession.lecturerName,
+        hallLocation: liveSession.hallLocation,
+        department: 'Cybersecurity',
+        totalLectures: 1,
+        createdAt: liveSession.startTime,
+      });
+    }
+
+    const courseList = Array.from(allCourseMap.values());
+
+    const courseStatsList: StudentCourseStats[] = courseList.map(course => {
       const sessionMap = new Map<string, AttendanceSession>();
       completedSessions
         .filter(s => s.courseCode.toUpperCase() === course.code.toUpperCase())
@@ -990,7 +1074,7 @@ async function startServer() {
       let timesAttended = 0;
       const sessionAudits: LectureSessionAudit[] = courseSessions.map(session => {
         const record = attendanceRecords.find(
-          r => r.sessionId === session.id && r.jambRegNo === student.jambRegNo
+          r => r.sessionId === session.id && r.jambRegNo.toUpperCase() === student.jambRegNo.toUpperCase()
         );
         const attended = !!record;
         if (attended) timesAttended++;
@@ -1008,12 +1092,14 @@ async function startServer() {
       });
 
       totalClassesAttended += timesAttended;
-      const rate = totalHeld > 0 ? (timesAttended / totalHeld) * 100 : 0;
+      const rate = totalHeld > 0 ? (timesAttended / totalHeld) * 100 : 100.0;
       const roundedRate = Math.round(rate * 10) / 10;
       const isEligible = roundedRate >= 75.0;
 
       let statusTier: 'eligible' | 'at_risk' | 'ineligible' = 'eligible';
-      if (roundedRate >= 75) {
+      if (totalHeld === 0) {
+        statusTier = 'eligible'; // No classes held yet - clean standing
+      } else if (roundedRate >= 75) {
         statusTier = 'eligible';
         eligibleCoursesCount++;
       } else if (roundedRate >= 50) {
@@ -1037,21 +1123,23 @@ async function startServer() {
     });
 
     const overallRate = totalClassesHeld > 0
-      ? (totalClassesAttended / totalClassesHeld) * 100
-      : 0;
+      ? Math.round(((totalClassesAttended / totalClassesHeld) * 100) * 10) / 10
+      : 100.0;
 
     const summary: StudentSummaryStats = {
       student,
-      overallAttendanceRate: Math.round(overallRate * 10) / 10,
+      overallAttendanceRate: overallRate,
       totalClassesHeld,
       totalClassesAttended,
-      eligibleCoursesCount,
-      totalCoursesCount: masterCourses.length,
+      eligibleCoursesCount: totalClassesHeld === 0 ? courseList.length : eligibleCoursesCount,
+      totalCoursesCount: courseList.length,
       courses: courseStatsList,
     };
 
     return res.json({ found: true, stats: summary });
-  });
+  };
+  app.get('/api/student/stats', handleStudentStats);
+  app.get('/api/student/stats/*', handleStudentStats);
 
   // 15. Export Cumulative Course Matrix CSV (Protected by Course Rep Password)
   app.get('/api/courses/:courseId/export-matrix', requireAdminAuth, (req, res) => {
