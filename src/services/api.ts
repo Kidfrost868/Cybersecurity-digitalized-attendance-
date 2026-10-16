@@ -671,6 +671,35 @@ export class AttendanceApiService {
     }
   }
 
+  // Create course
+  static async createCourse(courseData: Partial<Course>): Promise<{ success: boolean; course?: Course; error?: string }> {
+    try {
+      const res = await fetch('/api/courses', {
+        method: 'POST',
+        headers: this.getAdminAuthHeaders(),
+        body: JSON.stringify(courseData),
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return { success: false, error: 'Network error creating course' };
+    }
+  }
+
+  // Delete course
+  static async deleteCourse(courseId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetch(`/api/courses/${encodeURIComponent(courseId)}`, {
+        method: 'DELETE',
+        headers: this.getAdminAuthHeaders(),
+      });
+      const data = await res.json();
+      return data;
+    } catch {
+      return { success: false, error: 'Network error deleting course' };
+    }
+  }
+
   // Wipe All Students (Completely clean slate)
   static async wipeAllStudents(): Promise<boolean> {
     try {
