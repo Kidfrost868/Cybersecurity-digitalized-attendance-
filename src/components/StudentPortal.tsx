@@ -8,8 +8,8 @@ import {
   User,
   ArrowRight,
   RefreshCw,
-  Sparkles,
   Lock,
+  Check,
 } from 'lucide-react';
 import { AttendanceApiService } from '../services/api.ts';
 import { getDeviceSecurityPayload } from '../utils/deviceFingerprint.ts';
@@ -31,7 +31,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   onGoToMyStats,
   activeSession,
   onOpenAdminLogin,
-  isAdminAuthenticated,
   prefilledJamb,
 }) => {
   const [jambRegNo, setJambRegNo] = useState('');
@@ -130,7 +129,6 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     if (sanitized.length > 0) {
       newDigits[index] = sanitized.slice(-1);
       setPinDigits(newDigits);
-      // Auto-advance to next box
       if (index < 3) {
         digitInputRefs[index + 1].current?.focus();
       }
@@ -161,7 +159,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     }
   };
 
-  // Form Submission with 1-Minute Passcode & Single-Device Anti-Proxy Verification
+  // Form Submission with 1-Min Rotating PIN & Single-Device Anti-Proxy
   const handleSubmitCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -176,7 +174,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     }
 
     if (passcode.length !== 4) {
-      setErrorMessage('Please enter the complete 4-digit passcode displayed in class.');
+      setErrorMessage('Please enter the complete 4-digit passcode displayed on the screen.');
       digitInputRefs[pinDigits.findIndex(d => !d) || 0]?.current?.focus();
       return;
     }
@@ -211,7 +209,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
 
   return (
     <div className="min-h-[calc(100vh-4rem)] w-full max-w-full overflow-x-hidden bg-slate-900 text-slate-100 py-4 sm:py-6 px-3 sm:px-6 flex flex-col justify-start items-center">
-      <div className="w-full max-w-md mx-auto space-y-5 sm:space-y-6">
+      <div className="w-full max-w-md mx-auto space-y-4 sm:space-y-5">
 
         {/* Live Session Status Banner */}
         {activeSession && activeSession.status === 'active' ? (
@@ -226,44 +224,42 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 {sessionTimeLeft} left
               </span>
             </div>
-
-            <div className="mt-3 flex items-start justify-between gap-3">
+            <div className="pt-2 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-white tracking-tight">
-                  {activeSession.courseCode}
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                <span className="text-white font-bold text-sm block">
+                  {activeSession.courseCode} · Lecture #{activeSession.lectureNumber || 1}
+                </span>
+                <span className="text-xs text-slate-400 truncate block max-w-[260px]">
                   {activeSession.courseTitle}
-                </p>
-                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                  <span>Venue: {activeSession.hallLocation}</span>
-                </p>
+                </span>
               </div>
-
-              {onGoToProjector && (
-                <button
-                  type="button"
-                  onClick={onGoToProjector}
-                  className="shrink-0 px-2.5 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded-lg border border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
-                  title="View live lecture hall rolling PIN display"
-                >
-                  <span>View Hall PIN</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              )}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                Live PIN
+              </span>
             </div>
           </div>
         ) : (
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-slate-400 flex items-center gap-3">
-            <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-            <div>
-              <span className="font-semibold text-slate-300 block">No Active Attendance Session</span>
-              <span className="text-slate-500">Waiting for Course Rep or Lecturer to start attendance...</span>
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center space-y-2 w-full">
+            <div className="w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center mx-auto text-slate-400">
+              <Clock className="w-5 h-5" />
             </div>
+            <h2 className="text-sm font-semibold text-white">No Active Lecture Session</h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Attendance sessions are launched by the Course Rep or Lecturer during scheduled lecture hours.
+            </p>
+            {onGoToProjector && (
+              <button
+                type="button"
+                onClick={onGoToProjector}
+                className="mt-2 text-xs text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer"
+              >
+                View Classroom Screen →
+              </button>
+            )}
           </div>
         )}
 
-        {/* Verification Success Pass Card */}
+        {/* Check-In Form or Success Receipt */}
         {resultRecord ? (
           <div className="bg-slate-950 border border-emerald-500/50 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5 animate-in fade-in zoom-in-95 duration-200 w-full overflow-hidden">
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/10 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-400">
@@ -275,7 +271,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 Attendance Recorded
               </h3>
               <p className="text-xs text-emerald-400 font-medium">
-                Accredited & Verified for this Session
+                Accredited Student Verification Confirmed
               </p>
             </div>
 
@@ -304,7 +300,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 </span>
               </div>
               <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 shrink-0">Security Hash</span>
+                <span className="text-slate-400 shrink-0">Verification Receipt</span>
                 <span className="font-mono text-[10px] text-slate-500 truncate text-right">
                   {resultRecord.id.substring(0, 16)}
                 </span>
@@ -314,7 +310,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             {/* Anti-Proxy Device Badge */}
             <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300">
               <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span>Device Locked: Single-device hardware lock verified for this student.</span>
+              <span>Single-Device Hardware Lock Verified · Anti-Proxy Defense Active.</span>
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
@@ -349,7 +345,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
           /* Main Check-In Form */
           <form
             onSubmit={handleSubmitCheckIn}
-            className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5 sm:space-y-6 w-full overflow-hidden"
+            className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5 w-full overflow-hidden"
           >
             <div>
               <div className="flex items-center justify-between">
@@ -357,35 +353,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                   Student Check-In
                 </h1>
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  RUN CyberPass
+                  Instant Verification
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                Enter your JAMB registration number and the live 4-digit passcode displayed in class.
+                Enter your accredited JAMB number and the live 4-digit PIN displayed on the lecture screen.
               </p>
-            </div>
-
-            {/* Live Verification Shield Card: 1-Minute Rolling PIN + Single-Device Lock */}
-            <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/90 text-xs space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <span className="font-semibold text-white">Live Attendance Shield Active</span>
-                </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  Fast Anti-Proxy Lock
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-slate-300">
-                <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>1-Min Rotating PIN</span>
-                </div>
-                <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 flex items-center gap-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>1 Device = 1 Student</span>
-                </div>
-              </div>
             </div>
 
             {/* Error Message Box */}
@@ -401,13 +374,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 <div className="space-y-1.5 flex-1">
                   <p className="font-semibold">{errorMessage}</p>
                   {errorCode === 'INVALID_CODE' && (
-                    <p className="text-slate-400">
-                      Tip: Passcodes rotate every 1 minute. Make sure you enter the latest PIN from the classroom projector.
+                    <p className="text-slate-400 text-[11px]">
+                      Tip: Passcodes rotate every 1 minute. Enter the latest PIN shown on the lecture screen.
                     </p>
                   )}
                   {errorCode === 'DEVICE_LOCKED' && (
-                    <p className="text-slate-400">
-                      Single-Device Lock: This phone has already submitted attendance for another coursemate. Anti-proxy rules prevent signing in for multiple students.
+                    <p className="text-slate-400 text-[11px]">
+                      Single-Device Lock: This phone has already submitted attendance for another coursemate.
                     </p>
                   )}
                 </div>
@@ -460,7 +433,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                     </div>
                   </div>
                   <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">
-                    Verified
+                    Accredited
                   </span>
                 </div>
               )}
@@ -485,9 +458,9 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
                   <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                  Hall Passcode (4 Digits)
+                  Lecture Passcode (4 Digits)
                 </label>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-slate-400 font-mono">
                   Rotates every 1 min
                 </span>
               </div>
@@ -512,16 +485,20 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
               </div>
 
               <p className="text-[11px] text-slate-400 text-center">
-                Look at the lecture hall screen or projector for the active PIN.
+                Look at the lecture screen or projector for the active 4-digit PIN.
               </p>
             </div>
 
             {/* Anti-Proxy Guard Footnote */}
-            <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-2.5 text-xs text-slate-400">
-              <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>
-                Single-device lock active: Only 1 submission allowed from this phone.
-              </span>
+            <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between text-xs text-slate-400">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Single-device lock: 1 submission per phone</span>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
+                <Check className="w-3.5 h-3.5" />
+                <span>Cloud Synced</span>
+              </div>
             </div>
 
             {/* Submit Button */}
@@ -533,12 +510,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
               {isSubmitting ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Verifying Passcode & Identity...</span>
+                  <span>Verifying Credentials & Identity...</span>
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Record Attendance</span>
+                  <span>Confirm Presence & Record Attendance</span>
                 </>
               )}
             </button>
@@ -546,7 +523,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
         )}
 
         {/* Subtle, Discreet Course Rep Portal Trigger */}
-        <div className="pt-4 pb-6 text-center">
+        <div className="pt-2 pb-6 text-center">
           <button
             type="button"
             onClick={onOpenAdminLogin}

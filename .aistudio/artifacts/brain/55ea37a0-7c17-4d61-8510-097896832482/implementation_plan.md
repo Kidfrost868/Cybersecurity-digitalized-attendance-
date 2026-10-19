@@ -1,108 +1,104 @@
-# Student Roster Management, Course Ledger Reset & Check-In Streamlining
+# Centralized Firebase Firestore Cloud Database Migration
 
-Empower the Course Rep with full student lifecycle management (inline editing, removal, and addition), reset the Course Ledger to an empty initial state with custom course creation, and remove the GPS location blocker in favor of high-reliability 1-minute rolling passcodes and single-device hardware locking.
+## Title & Summary
+Migrate UniPass from local device storage to a centralized, multi-device Firebase Firestore cloud database. This ensures student rosters, active lecture sessions, attendance ledgers, geofence validations, and Course Rep in-hall overrides synchronize in real time across lecturers' laptops, student smartphones, and classroom projectors, backed by local offline persistence for lecture halls with unstable connectivity.
+
+---
 
 ## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> Based on your clarification, the following architectural choices have been locked in:
-> - **Attendance Verification**: Removed the GPS geolocation enforcement and distance verification. Check-in now relies on the **1-minute rolling passcode** displayed in class combined with **single-device hardware locking** (anti-proxy protection).
-> - **Course Ledger Reset**: Cleared all pre-existing courses from the database. The Course Ledger starts completely clean, equipped with an intuitive **"Add Course" modal** allowing the Class Rep to set up courses on demand.
-> - **Student Management**: Direct **Edit** and **Delete** action buttons on each student row in the Roster Manager, complete with an Edit Student modal (supporting name, JAMB, matric, level, department updates) and a safe delete confirmation.
+> The following decisions were confirmed by the user during Phase 1:
+> - **Provisioning Method**: Automatic 1-click AI Studio cloud provisioning (with optional fallback code comments showing manual configuration keys).
+> - **Cloud Sync Scope**: Full synchronization across all data collections (student master roster, courses, active lecture sessions, verified attendance ledger records, flagged security proxy attempts, and in-hall location overrides).
+> - **Offline Resilience**: Offline-first caching with automatic background synchronization when internet connectivity drops inside lecture halls.
 
 ---
 
 ## 1. Overview & Core Concept
 
-- **What It Does**:
-  1. **Class Rep Roster Control**: The Course Rep can now update student records (correct typos, edit JAMB or Matric numbers, change levels) or delete students directly from the Roster table, as well as add new students individually or in bulk via CSV.
-  2. **Clean Course Ledger**: Removes all seeded test courses. The system provides an empty slate with an interactive "+ Add Course" dialog for the Class Rep to configure course codes, titles, and venues.
-  3. **Hassle-Free Anti-Proxy Check-In**: Eliminates browser GPS errors, permission prompts, and coordinate drift. Students only need to enter their JAMB/Matric number and the 4-digit PIN currently projected on the classroom screen. The server guarantees anti-proxy integrity through single-device hardware/fingerprint locking and 1-minute code expiration.
-- **Target Audience**: Cybersecurity students and Course Reps in the Faculty of Computing & Digital Technology at Redeemer's University.
-- **Key Value**: 100% check-in reliability without false location blocks, paired with complete administrative autonomy for the Class Rep to manage students and courses.
+- **What It Does**: Replaces isolated in-memory and local browser storage with a persistent Google Cloud Firestore database. Lecturers, Course Reps, and students can access the system simultaneously from distinct physical devices; any roster edit, attendance check-in, or session launch is immediately reflected across all screens.
+- **Target Audience / Persona**: Course Representatives, Lecturers, and Students in the Faculty of Computing & Digital Technology at Redeemer's University.
+- **Key Value**: Solves the data-silo problem where attendance recorded on a student's phone was invisible to the Course Rep's dashboard or classroom projector screen without manual local imports.
 
 ---
 
 ## 2. User Experience & Visual Design
 
-### Key User Flows
-
-```
-[Student Check-In]
-Student enters JAMB/Matric -> Live 4-digit PIN -> Instant Verification
-(No GPS permission dialogs, no out-of-bounds errors, immediate check-in)
-
-[Class Rep - Student Management]
-Roster Directory -> Each row has [Edit] and [Delete] buttons
-  ├── Click Edit: Modal pre-filled with student info -> Save Changes -> Instant table update
-  └── Click Delete: Confirmation prompt -> Remove student from database -> Notification toast
-
-[Class Rep - Course Ledger]
-Course Ledger Tab -> Empty State: "No courses configured yet" -> Click "+ Add Course"
-  └── Modal: Course Code, Course Title, Lecturer Name, Venue -> Create Course -> Ledger Matrix active
-```
-
-### Visual Identity & Theme
-- **Theme**: High-contrast slate and emerald aesthetic (`#020617` / `#0F172A` / `#10B981`) fitting cybersecurity infrastructure.
-- **Roster Action Controls**: Compact icon buttons on each row:
-  - Edit: Emerald/slate button with edit pencil icon (`Lucide Edit3`).
-  - Delete: Rose/slate button with trash icon (`Lucide Trash2`).
-  - Add Course: Prominent emerald action button with plus icon (`Lucide Plus`).
-- **Typography & Data Grid**: Monospaced tabular numerals for student IDs, lecture counts, and passcodes (`font-mono tabular-nums`).
+- **Real-Time Multi-Device Sync**:
+  - When the Course Rep launches a session on the podium computer, it immediately activates on all students' mobile portals within sub-seconds.
+  - When students submit check-ins from their seats, the attendee count and live stream increment instantly on the classroom projector and rep dashboard without page refreshes.
+  - When a Course Rep grants an In-Hall GPS Override on their phone, the student's device immediately unlocks for sign-in.
+- **Connection & Sync Health Indicator**:
+  - A discreet cloud sync status indicator in the navigation header:
+    - 🟢 *Cloud Synced (Connected to Firestore)*
+    - 🟡 *Offline Mode (Cached locally, will sync automatically)*
+    - 🔵 *Syncing transactions...*
+- **Visual Theme & Anti-Slop Guidelines**:
+  - Preserves the sleek dark institutional aesthetic (`#070A11`, Slate-900, Emerald-400 accent) tailored for Redeemer's University Cybersecurity Department.
+  - Unboxed metadata with typographic separators (`·`), high-contrast typography (`IBM Plex Mono` for JAMB/matric/PINs, `Plus Jakarta Sans` for body and headings).
 
 ---
 
 ## 3. Key Product Decisions & Trade-Offs
 
-- **Decision 1: Removal of GPS Geofencing**
-  - *Chosen Approach*: Strip out the browser geolocation requirement, `userLat`/`userLng` submission, and distance calculation. Check-in directly validates the student JAMB against the master roster, the current/previous 1-minute rolling PIN, and device uniqueness.
-  - *Why*: Mobile browser permission popups, iframe sandboxes, and indoors GPS multipath interference caused legitimate students in the hall to be blocked. 1-minute rolling PINs visible only on the physical hall projector already provide strong physical presence assurance.
-  - *Alternative Considered*: Retaining GPS as optional; rejected because confusing location status cards cluttered the student view.
-- **Decision 2: Student Mutation Endpoints**
-  - *Chosen Approach*: Add `PUT /api/students/:jamb` (Edit student) and `DELETE /api/students/:jamb` (Delete student) protected by Course Rep authentication (`requireAdminAuth`).
-  - *Why*: Allows instantaneous roster corrections without needing full database resets.
-- **Decision 3: Course Creation & Ledger Empty State**
-  - *Chosen Approach*: Provide `POST /api/courses` and `DELETE /api/courses/:courseId` endpoints. When no courses exist, display a clean empty state with a 1-click "Add Course" trigger.
+- **Decision 1: Direct Firestore SDK vs Server-Proxy Cloud Sync**
+  - *Chosen Approach*: Hybrid architecture. The client uses Firebase SDK for real-time document listeners (`onSnapshot`) to deliver instant projector and mobile updates, while the Express server maintains transactional authority and security validation.
+  - *Why*: Provides sub-second real-time responsiveness on classroom screens while maintaining server-side security checks (single-device fingerprinting, 50m Haversine geofence calculation, and brute-force lockouts).
+- **Decision 2: Offline Persistence Strategy**
+  - *Chosen Approach*: Enable Firestore offline cache persistence (`enableIndexedDbPersistence` / `persistentLocalCache`).
+  - *Why*: Campus lecture theatres frequently suffer from intermittent mobile reception; students and lecturers can continue recording check-ins offline, which automatically sync once the device reconnects.
+- **Decision 3: Configuration Keys & Setup Documentation**
+  - *Chosen Approach*: Provision via AI Studio's integrated Firebase workflow, but provide a dedicated `src/config/firebase.ts` module with explicit comments detailing where to inspect or inject custom Firebase API keys if deploying independently.
 
 ---
 
 ## 4. Technical Architecture & Data Strategy
 
+### System Architecture Diagram
+
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        RUN CyberPass Frontend                          │
+│                        Firebase Firestore Cloud                        │
 │                                                                        │
-│  ┌───────────────────────┐  ┌────────────────────┐  ┌───────────────┐ │
-│  │   Student Check-In    │  │   Roster Manager   │  │ Course Ledger │ │
-│  │ (JAMB + PIN + Device) │  │  (Add/Edit/Delete) │  │  (Add/Manage) │ │
-│  └───────────┬───────────┘  └─────────┬──────────┘  └───────┬───────┘ │
-└──────────────┼────────────────────────┼─────────────────────┼─────────┘
-               │                        │                     │
-               ▼                        ▼                     ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Express Backend API                             │
-│                                                                        │
-│  • POST /api/check-in             (Passcode + Single-Device Guard)     │
-│  • GET/POST/PUT/DELETE /api/students                                   │
-│  • GET/POST/DELETE /api/courses   (Empty initial state + Add Course)   │
-│  • GET /api/courses/:id/ledger    (Live attendance matrix)             │
-│                                                                        │
-│  ┌──────────────────────────────────────────────────────────────────┐  │
-│  │ In-Memory Data Store: masterStudents, masterCourses, records     │  │
-│  └──────────────────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────────────────┘
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌─────────┐  │
+│  │   students   │   │   courses    │   │   sessions   │   │ records │  │
+│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘   └────┬────┘  │
+│         │                  │                  │                │       │
+│  ┌──────┴──────────────────┴──────────────────┴────────────────┴────┐  │
+│  │           Security Rules (firestore.rules) & RBAC Guard          │  │
+│  └─────────────────────────────────┬────────────────────────────────┘  │
+└────────────────────────────────────┼───────────────────────────────────┘
+                                     │ Realtime Sync & Offline Cache
+             ┌───────────────────────┼──────────────────────┐
+             │                       │                      │
+             ▼                       ▼                      ▼
+┌─────────────────────────┐ ┌──────────────────┐ ┌──────────────────────┐
+│  Course Rep Dashboard   │ │ Projector Screen │ │    Student Portal    │
+│  - Live Roster Manager  │ │ - Giant PIN HUD  │ │  - 50m Radar Badge   │
+│  - In-Hall Override Desk│ │ - Live Ticker    │ │  - Anti-Proxy Lock   │
+│  - Multi-Course Ledgers │ │ - Attendance %   │ │  - Real-Time Check-In│
+└─────────────────────────┘ └──────────────────┘ └──────────────────────┘
 ```
 
-### API Handlers to Update/Add
-1. `PUT /api/students/:jamb`: Updates student full name, matric number, level, and department.
-2. `DELETE /api/students/:jamb`: Removes the student from `masterStudents` and clears associated device locks.
-3. `POST /api/courses`: Creates a new course and adds it to `masterCourses`.
-4. `DELETE /api/courses/:courseId`: Deletes a course from the ledger.
-5. `POST /api/check-in`: Remove `userLat`, `userLng`, and Haversine distance verification; streamline passcode + single-device validation.
+### Firestore Schema & Collections
+1. **`students`**: Document ID = `jambRegNo`
+   - Fields: `jambRegNo`, `fullName`, `matricNo`, `department`, `level`, `phone`, `createdAt`, `updatedAt`
+2. **`courses`**: Document ID = `id` (e.g., `course-cyb301`)
+   - Fields: `id`, `code`, `title`, `lecturerName`, `hallLocation`, `department`, `totalLectures`, `createdAt`
+3. **`sessions`**: Document ID = `sessionId`
+   - Fields: `id`, `courseId`, `lectureNumber`, `courseCode`, `courseTitle`, `lecturerName`, `courseRepName`, `hallLocation`, `startTime`, `durationMs`, `expiresAt`, `status`, `latitude`, `longitude`, `geofenceRadius`, `currentPasscode`, `previousPasscode`
+4. **`records`**: Document ID = `rec-{id}`
+   - Fields: `id`, `sessionId`, `courseId`, `courseCode`, `lectureNumber`, `jambRegNo`, `studentName`, `matricNo`, `department`, `deviceId`, `timestamp`, `status`, `distanceMeters`, `userLat`, `userLng`
+5. **`flaggedAttempts`**: Document ID = `flag-{id}`
+   - Fields: `id`, `sessionId`, `jambRegNo`, `studentName`, `attemptedCode`, `deviceId`, `timestamp`, `userLat`, `userLng`, `distanceMeters`, `reason`
+6. **`locationOverrides`**: Document ID = `{sessionId}_{jambRegNo}`
+   - Fields: `id`, `sessionId`, `jambRegNo`, `studentName`, `deviceId`, `grantedAt`, `reason`
 
-### Component Updates
-1. `src/components/StudentPortal.tsx`: Remove all GPS acquisition hooks, location status indicators, and permission buttons. Deliver a clean, rapid check-in form.
-2. `src/components/RosterManager.tsx`: Add `Edit` and `Delete` action buttons to each student row, with an Edit Student modal and a Delete confirmation modal.
-3. `src/components/CourseLedgerView.tsx`: Support an empty course state with a dedicated "+ Add Course" modal.
-4. `src/components/AdminDashboard.tsx`: Add course deletion/creation controls and remove GPS coordinate capturing.
-5. `src/services/api.ts` & `server.ts`: Wire new student and course CRUD routes and clear initial course list.
+### Execution Roadmap (Post-Approval)
+1. **Step 1: Firebase Tool Trigger**: Call `show_aistudio_ui` with `ui_type: "firebase_setup"` to open the terms confirmation and initiate provisioning.
+2. **Step 2: Dependencies & Configuration**: Install `firebase` package; configure `src/config/firebase.ts` with transparent key documentation and offline persistence.
+3. **Step 3: Intermediate IR & Security Rules**: Create `firebase-blueprint.json` and deploy robust `firestore.rules`.
+4. **Step 4: Refactor Service Layer (`api.ts`)**: Update student roster CRUD, attendance submission, session states, and override desks to read/write Firestore collections.
+5. **Step 5: Frontend Real-Time Subscriptions**: Wire `StudentPortal.tsx`, `AdminDashboard.tsx`, and `ProjectorView.tsx` with live Firestore listeners.
+6. **Step 6: Verification & Compilation**: Validate build, verify cross-device sync via curl/browsers, and ensure zero lint errors.

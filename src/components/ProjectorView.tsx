@@ -219,9 +219,12 @@ export const ProjectorView: React.FC<ProjectorViewProps> = ({
                   </div>
 
                   <div className="text-right">
-                    <span className="text-slate-500 text-[11px] block">Venue</span>
+                    <span className="text-slate-500 text-[11px] block">Venue & Perimeter</span>
                     <span className="text-slate-300 font-medium">
                       {session?.hallLocation || 'Main Lecture Hall'}
+                    </span>
+                    <span className="text-emerald-400 font-mono text-[10px] block mt-0.5">
+                      Strict {session?.geofenceRadius || 50}m GPS Geofence
                     </span>
                   </div>
                 </div>
@@ -231,7 +234,7 @@ export const ProjectorView: React.FC<ProjectorViewProps> = ({
               <div className="w-full flex items-center gap-3 px-4 py-3 bg-slate-950/60 border border-slate-800/80 rounded-xl text-xs text-slate-400">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>
-                  Anti-Proxy Active: Single phone locked per JAMB number · Remote WhatsApp sharing blocked by {totalInterval >= 60 ? '1-minute' : `${totalInterval}s`} rotation.
+                  Anti-Proxy Active: Single phone locked per JAMB number · Strict 50m physical hall geofence · Remote sign-in blocked by {totalInterval >= 60 ? '1-minute' : `${totalInterval}s`} PIN rotation.
                 </span>
               </div>
             </div>

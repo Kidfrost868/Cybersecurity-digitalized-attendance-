@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Sparkles,
   Lock,
+  Cloud,
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
 
@@ -156,6 +157,31 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </div>
           <div className="pt-1">
             <PWAInstallButton variant="banner" className="w-full" />
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Centralized Cloud Database',
+      subtitle: 'Multi-Device Real-Time Sync with Firebase Firestore',
+      icon: Cloud,
+      color: 'text-sky-400',
+      bgColor: 'bg-sky-500/10 border-sky-500/30',
+      content: (
+        <div className="space-y-3.5 text-xs text-slate-300">
+          <p className="leading-relaxed">
+            All student rosters, active lecture sessions, verified attendance records, and in-hall passes are stored centrally in <strong className="text-white">Google Cloud Firestore</strong>.
+          </p>
+          <div className="p-3 bg-sky-950/30 rounded-xl border border-sky-500/30 space-y-2">
+            <div className="flex items-center gap-2 text-sky-300 font-semibold">
+              <Cloud className="w-4 h-4 text-sky-400" />
+              <span>Multi-Device Synchronization:</span>
+            </div>
+            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-300">
+              <li><strong>Cross-Device:</strong> When a Course Rep adds students or starts a lecture, all devices update instantly without page reloads.</li>
+              <li><strong>Offline Persistence:</strong> If lecture theatre internet connectivity fluctuates, check-ins are cached locally in IndexedDB and automatically sync once reconnected.</li>
+              <li><strong>Standalone Setup:</strong> If self-hosting, simply paste your Firebase project keys into <code className="text-emerald-400">src/config/firebase.ts</code>.</li>
+            </ul>
           </div>
         </div>
       ),

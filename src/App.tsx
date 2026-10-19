@@ -27,10 +27,13 @@ export default function App() {
   useEffect(() => {
     setIsAdminAuthenticated(AttendanceApiService.isAdminAuthenticated());
     try {
-      // Clear legacy mock seed names from browser localStorage so database starts completely clean
-      const stored = localStorage.getItem('unipass_students');
-      if (stored && (stored.includes('Asuelime') || stored.includes('202660245646HJ') || stored.includes('Mcchris'))) {
+      // Force clean slate for student list across sessions per user request
+      const cleanSlateVersion = localStorage.getItem('unipass_clean_slate_v3');
+      if (!cleanSlateVersion) {
         localStorage.removeItem('unipass_students');
+        localStorage.removeItem('unipass_records');
+        localStorage.removeItem('unipass_flagged');
+        localStorage.setItem('unipass_clean_slate_v3', 'true');
       }
 
       const seen = localStorage.getItem('run_cyberpass_onboarding_seen');
@@ -69,8 +72,31 @@ export default function App() {
 
   useEffect(() => {
     syncSession();
-    const interval = setInterval(syncSession, 2500);
-    return () => clearInterval(interval);
+    const unsubscribe = AttendanceApiService.subscribeToActiveSession((session) => {
+      if (session && session.status === 'active' && Date.now() <= session.expiresAt) {
+        setPublicSession({
+          id: session.id,
+          courseId: session.courseId,
+          lectureNumber: session.lectureNumber,
+          courseCode: session.courseCode,
+          courseTitle: session.courseTitle,
+          hallLocation: session.hallLocation,
+          status: session.status,
+          startTime: session.startTime,
+          expiresAt: session.expiresAt,
+          remainingMs: Math.max(0, session.expiresAt - Date.now()),
+        });
+      } else {
+        setPublicSession(null);
+      }
+    });
+    const interval = setInterval(syncSession, 3000);
+    return () => {
+      clearInterval(interval);
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const handleRequireAdminAuth = (target?: ActiveTab) => {

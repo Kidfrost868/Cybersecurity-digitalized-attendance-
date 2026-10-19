@@ -13,6 +13,7 @@ import {
   X,
   ChevronRight,
   Sparkles,
+  Cloud,
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton.tsx';
 
@@ -164,6 +165,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           )}
+
+          <div
+            className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-sky-950/40 border border-sky-500/30 text-sky-300 text-xs font-mono"
+            title="Connected to Centralized Google Cloud Firestore database. Syncs across all devices in real-time."
+          >
+            <Cloud className="w-3.5 h-3.5 text-sky-400" />
+            <span className="font-medium text-[11px]">Cloud Synced</span>
+          </div>
 
           <PWAInstallButton variant="nav" />
 

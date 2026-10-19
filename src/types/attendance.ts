@@ -6,6 +6,7 @@ export interface Student {
   level: string;
   phone?: string;
   createdAt: number;
+  updatedAt?: number;
 }
 
 export interface Course {
@@ -37,9 +38,6 @@ export interface AttendanceSession {
   passcodeRotatedAt: number;
   passcodeExpiresAt: number;
   passcodeIntervalMs: number; // 60,000 ms
-  latitude?: number;
-  longitude?: number;
-  geofenceRadius?: number; // meters (default 60m)
 }
 
 export interface AttendanceRecord {
@@ -58,9 +56,6 @@ export interface AttendanceRecord {
   timestamp: number;
   status: 'verified' | 'flagged' | 'manual_override';
   ipAddress?: string;
-  userLat?: number;
-  userLng?: number;
-  distanceMeters?: number;
 }
 
 export interface FlaggedProxyAttempt {
@@ -72,9 +67,6 @@ export interface FlaggedProxyAttempt {
   deviceId: string;
   hardwareHash?: string;
   timestamp: number;
-  userLat?: number;
-  userLng?: number;
-  distanceMeters?: number;
   reason:
     | 'device_already_used'
     | 'invalid_passcode'
@@ -85,9 +77,7 @@ export interface FlaggedProxyAttempt {
     | 'rate_limit_exceeded'
     | 'hardware_spoofing_detected'
     | 'unauthorized_admin_attempt'
-    | 'input_tamper_attempt'
-    | 'geofence_violation'
-    | 'location_permission_denied';
+    | 'input_tamper_attempt';
 }
 
 export interface DeviceLock {
@@ -112,9 +102,6 @@ export interface SessionPublicInfo {
   startTime: number;
   expiresAt: number;
   remainingMs: number;
-  latitude?: number;
-  longitude?: number;
-  geofenceRadius?: number;
 }
 
 export interface CheckInResponse {
@@ -122,8 +109,6 @@ export interface CheckInResponse {
   message: string;
   record?: AttendanceRecord;
   studentName?: string;
-  distanceMeters?: number;
-  allowedRadius?: number;
   errorCode?:
     | 'INVALID_CODE'
     | 'EXPIRED_CODE'
@@ -134,8 +119,6 @@ export interface CheckInResponse {
     | 'RATE_LIMITED'
     | 'BRUTE_FORCE_LOCKOUT'
     | 'INPUT_VALIDATION_ERROR'
-    | 'GEOFENCE_VIOLATION'
-    | 'LOCATION_REQUIRED'
     | 'UNAUTHORIZED';
 }
 

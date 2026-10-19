@@ -37,25 +37,6 @@ function getPasscodeForInterval(sessionId: string, intervalIndex: number): strin
 // In-Memory Database Store - completely clean per user request
 let masterStudents: Student[] = [];
 
-// Redeemer's University Ede Campus Baseline GPS Coordinates (Main Campus, Osun State)
-const DEFAULT_RUN_LAT = 7.6983;
-const DEFAULT_RUN_LNG = 4.4239;
-
-// Haversine distance formula between two lat/lng coordinates in meters
-function calculateHaversineDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000; // Earth radius in meters
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c);
-}
-
 // Registered Courses for Redeemer's University Cybersecurity Department (Faculty of Computing & Digital Technology)
 // Starts completely clean per user request
 let masterCourses: Course[] = [];
@@ -236,9 +217,6 @@ async function startServer() {
         expiresAt: session.expiresAt,
         status: session.status,
         remainingMs: Math.max(0, session.expiresAt - Date.now()),
-        latitude: session.latitude,
-        longitude: session.longitude,
-        geofenceRadius: session.geofenceRadius || 60,
       },
       totalCheckedIn: recordsForSession.length,
       totalStudents: masterStudents.length,
@@ -274,7 +252,7 @@ async function startServer() {
     });
   });
 
-  // 4. Start New Session with Course Linking & Dynamic GPS Geofencing
+  // 4. Start New Session with Course Linking
   app.post('/api/session/start', requireAdminAuth, (req, res) => {
     const {
       courseId,
@@ -285,9 +263,6 @@ async function startServer() {
       hallLocation,
       durationMinutes,
       passcodeIntervalSeconds,
-      latitude,
-      longitude,
-      geofenceRadius,
     } = req.body;
 
     const now = Date.now();
@@ -343,10 +318,6 @@ async function startServer() {
     const sessionId = `session-${finalCode.toLowerCase().replace(/[^a-z0-9]/g, '')}-lec${nextLectureNumber}-${Date.now().toString().slice(-4)}`;
     const initialCode = getPasscodeForInterval(sessionId, 0);
 
-    const sessionLat = typeof latitude === 'number' && !isNaN(latitude) ? latitude : DEFAULT_RUN_LAT;
-    const sessionLng = typeof longitude === 'number' && !isNaN(longitude) ? longitude : DEFAULT_RUN_LNG;
-    const sessionRadius = typeof geofenceRadius === 'number' && geofenceRadius > 0 ? geofenceRadius : 60;
-
     activeSession = {
       id: sessionId,
       courseId: finalCourseId,
@@ -365,9 +336,6 @@ async function startServer() {
       passcodeRotatedAt: now,
       passcodeExpiresAt: now + intervalMs,
       passcodeIntervalMs: intervalMs,
-      latitude: sessionLat,
-      longitude: sessionLng,
-      geofenceRadius: sessionRadius,
     };
 
     return res.json({ success: true, session: activeSession });
@@ -385,9 +353,9 @@ async function startServer() {
     return res.json({ success: true, message: 'Session concluded and archived.' });
   });
 
-  // 6. Student Check-In with Single-Device & 60m Dynamic GPS Geofence Security
+  // 6. Student Check-In with Single-Device Anti-Proxy Security
   app.post('/api/check-in', (req, res) => {
-    const { sessionId, jambRegNo, passcode, deviceId, hardwareHash, deviceInfo, userLat, userLng } = req.body;
+    const { sessionId, jambRegNo, passcode, deviceId, hardwareHash, deviceInfo } = req.body;
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
     const now = Date.now();
 
@@ -813,6 +781,17 @@ async function startServer() {
     const deletedStudent = masterStudents.splice(index, 1)[0];
     // Remove attendance records for clean state
     attendanceRecords = attendanceRecords.filter(r => r.jambRegNo.toUpperCase() !== deletedStudent.jambRegNo.toUpperCase());
+    // Cascade delete any locks associated with the student
+    for (const [key, lock] of deviceLocks.entries()) {
+      if (lock.jambRegNo.toUpperCase() === deletedStudent.jambRegNo.toUpperCase()) {
+        deviceLocks.delete(key);
+      }
+    }
+    for (const [key, lock] of hardwareLocks.entries()) {
+      if (lock.jambRegNo.toUpperCase() === deletedStudent.jambRegNo.toUpperCase()) {
+        hardwareLocks.delete(key);
+      }
+    }
     return res.json({ success: true, message: `Student ${deletedStudent.fullName} removed from roster.`, student: deletedStudent });
   };
   app.delete('/api/students', requireAdminAuth, handleDeleteStudent);
@@ -949,12 +928,13 @@ async function startServer() {
       });
 
       totalAttendanceInstances += attendedCount;
-      const rate = totalLecturesHeld > 0 ? (attendedCount / totalLecturesHeld) * 100 : 0;
+      // When 0 lectures have been held yet, student is in good standing (100% / eligible)
+      const rate = totalLecturesHeld > 0 ? (attendedCount / totalLecturesHeld) * 100 : 100;
       const roundedRate = Math.round(rate * 10) / 10;
-      const isExamEligible = roundedRate >= 75.0;
+      const isExamEligible = totalLecturesHeld === 0 || roundedRate >= 75.0;
 
       let statusTier: 'eligible' | 'at_risk' | 'ineligible' = 'eligible';
-      if (roundedRate >= 75) {
+      if (totalLecturesHeld === 0 || roundedRate >= 75) {
         statusTier = 'eligible';
         eligibleStudentsCount++;
       } else if (roundedRate >= 50) {

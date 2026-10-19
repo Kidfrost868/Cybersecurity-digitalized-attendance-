@@ -1,0 +1,167 @@
+{
+  "entities": {
+    "student": {
+      "title": "Student",
+      "description": "Accredited university student record in the master course roster.",
+      "type": "object",
+      "properties": {
+        "jambRegNo": { "type": "string", "description": "Unique JAMB registration number." },
+        "fullName": { "type": "string", "description": "Full legal name of the student." },
+        "matricNo": { "type": "string", "description": "University matriculation number." },
+        "department": { "type": "string", "description": "Academic department (e.g. Cybersecurity)." },
+        "level": { "type": "string", "description": "Academic level (e.g. 100L, 200L, 300L, 400L)." },
+        "phone": { "type": "string", "description": "Contact phone number." },
+        "createdAt": { "type": "number", "description": "Epoch timestamp of enrollment." },
+        "updatedAt": { "type": "number", "description": "Epoch timestamp of last update." }
+      },
+      "required": ["jambRegNo", "fullName"]
+    },
+    "course": {
+      "title": "Course",
+      "description": "Academic course offering in the university curriculum.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Course identifier slug." },
+        "code": { "type": "string", "description": "Official course code (e.g. CYB 401)." },
+        "title": { "type": "string", "description": "Complete course title." },
+        "lecturerName": { "type": "string", "description": "Assigned lecturer name." },
+        "hallLocation": { "type": "string", "description": "Designated lecture hall or lab venue." },
+        "department": { "type": "string", "description": "Hosting department." },
+        "totalLectures": { "type": "number", "description": "Cumulative total of lecture sessions held." },
+        "createdAt": { "type": "number", "description": "Creation timestamp." }
+      },
+      "required": ["id", "code", "title"]
+    },
+    "session": {
+      "title": "AttendanceSession",
+      "description": "Live or completed lecture attendance tracking session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique session ID." },
+        "courseId": { "type": "string", "description": "Associated course ID." },
+        "lectureNumber": { "type": "number", "description": "Continuous lecture number." },
+        "courseCode": { "type": "string", "description": "Course code." },
+        "courseTitle": { "type": "string", "description": "Course title." },
+        "lecturerName": { "type": "string", "description": "Lecturer name." },
+        "courseRepName": { "type": "string", "description": "Course Representative managing attendance." },
+        "hallLocation": { "type": "string", "description": "Lecture venue name." },
+        "startTime": { "type": "number", "description": "Session start timestamp." },
+        "durationMs": { "type": "number", "description": "Duration in milliseconds." },
+        "expiresAt": { "type": "number", "description": "Session expiration timestamp." },
+        "status": { "type": "string", "enum": ["active", "completed", "cancelled"] },
+        "currentPasscode": { "type": "string", "description": "Active 4-digit rotating PIN." },
+        "previousPasscode": { "type": "string", "description": "Previous interval 4-digit PIN." },
+        "passcodeRotatedAt": { "type": "number", "description": "Timestamp when PIN last changed." },
+        "passcodeExpiresAt": { "type": "number", "description": "Timestamp when PIN expires." },
+        "passcodeIntervalMs": { "type": "number", "description": "PIN rotation interval (e.g. 60000ms)." },
+        "latitude": { "type": "number", "description": "Center latitude coordinate of the lecture hall." },
+        "longitude": { "type": "number", "description": "Center longitude coordinate of the lecture hall." },
+        "geofenceRadius": { "type": "number", "description": "Allowed physical radius in meters (50m)." }
+      },
+      "required": ["id", "courseCode", "status", "startTime", "expiresAt"]
+    },
+    "attendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Accredited physical check-in record for a student in a lecture session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique check-in receipt ID." },
+        "sessionId": { "type": "string", "description": "Associated session ID." },
+        "courseId": { "type": "string", "description": "Course identifier." },
+        "courseCode": { "type": "string", "description": "Course code." },
+        "lectureNumber": { "type": "number", "description": "Lecture index." },
+        "jambRegNo": { "type": "string", "description": "Student JAMB registration number." },
+        "studentName": { "type": "string", "description": "Student full name." },
+        "matricNo": { "type": "string", "description": "Student matriculation number." },
+        "department": { "type": "string", "description": "Department." },
+        "deviceId": { "type": "string", "description": "Anti-proxy device fingerprint." },
+        "deviceInfo": { "type": "string", "description": "Hardware/browser summary." },
+        "hardwareHash": { "type": "string", "description": "Canvas/GPU hardware signature." },
+        "timestamp": { "type": "number", "description": "Submission timestamp." },
+        "status": { "type": "string", "enum": ["verified", "flagged", "manual_override"] },
+        "distanceMeters": { "type": "number", "description": "Calculated distance from lecture hall center." },
+        "userLat": { "type": "number", "description": "Student device latitude." },
+        "userLng": { "type": "number", "description": "Student device longitude." }
+      },
+      "required": ["id", "sessionId", "jambRegNo", "studentName", "timestamp", "status"]
+    },
+    "flaggedAttempt": {
+      "title": "FlaggedProxyAttempt",
+      "description": "Security audit record of blocked or suspicious attendance submission attempts.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique flag ID." },
+        "sessionId": { "type": "string", "description": "Session ID." },
+        "jambRegNo": { "type": "string", "description": "JAMB registration number." },
+        "studentName": { "type": "string", "description": "Student name if recognized." },
+        "attemptedCode": { "type": "string", "description": "PIN attempted." },
+        "deviceId": { "type": "string", "description": "Device fingerprint." },
+        "hardwareHash": { "type": "string", "description": "Hardware signature." },
+        "timestamp": { "type": "number", "description": "Timestamp." },
+        "userLat": { "type": "number", "description": "Detected latitude." },
+        "userLng": { "type": "number", "description": "Detected longitude." },
+        "distanceMeters": { "type": "number", "description": "Detected distance from lecture hall." },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "device_already_used",
+            "invalid_passcode",
+            "session_expired",
+            "unregistered_jamb",
+            "duplicate_submission",
+            "brute_force_lockout",
+            "rate_limit_exceeded",
+            "hardware_spoofing_detected",
+            "unauthorized_admin_attempt",
+            "input_tamper_attempt",
+            "geofence_violation",
+            "location_permission_denied"
+          ]
+        }
+      },
+      "required": ["id", "sessionId", "jambRegNo", "timestamp", "reason"]
+    },
+    "locationOverride": {
+      "title": "LocationOverride",
+      "description": "Session-scoped physical hall clearance granted by the Course Rep for weak indoor GPS.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique override ID." },
+        "sessionId": { "type": "string", "description": "Session ID." },
+        "jambRegNo": { "type": "string", "description": "Student JAMB registration number." },
+        "studentName": { "type": "string", "description": "Student name." },
+        "matricNo": { "type": "string", "description": "Student matric number." },
+        "deviceId": { "type": "string", "description": "Authorized device fingerprint." },
+        "grantedAt": { "type": "number", "description": "Timestamp granted." },
+        "reason": { "type": "string", "description": "Justification for in-hall override." }
+      },
+      "required": ["id", "sessionId", "jambRegNo", "grantedAt"]
+    }
+  },
+  "firestore": {
+    "/students/{jambRegNo}": {
+      "schema": "student",
+      "description": "Master student directory and enrollment records."
+    },
+    "/courses/{courseId}": {
+      "schema": "course",
+      "description": "Department academic courses and lecture indices."
+    },
+    "/sessions/{sessionId}": {
+      "schema": "session",
+      "description": "Live and archived lecture attendance sessions."
+    },
+    "/records/{recordId}": {
+      "schema": "attendanceRecord",
+      "description": "Verified attendance receipts across sessions."
+    },
+    "/flaggedAttempts/{flagId}": {
+      "schema": "flaggedAttempt",
+      "description": "Security logs of blocked proxy attempts and geofence violations."
+    },
+    "/locationOverrides/{overrideId}": {
+      "schema": "locationOverride",
+      "description": "Course Rep manual in-hall clearance passes for weak GPS."
+    }
+  }
+}

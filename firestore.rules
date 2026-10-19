@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Students master roster collection
+    match /students/{jambRegNo} {
+      allow read: if true;
+      allow create, update, delete: if true; // Course Rep roster management
+    }
+
+    // Academic courses collection
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Lecture attendance sessions
+    match /sessions/{sessionId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Verified attendance records
+    match /records/{recordId} {
+      allow read: if true;
+      allow create: if request.resource.data.jambRegNo != null 
+                    && request.resource.data.sessionId != null;
+      allow update, delete: if true;
+    }
+
+    // Security audit and anti-proxy flagged attempts
+    match /flaggedAttempts/{flagId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    // Course Rep in-hall manual location overrides
+    match /locationOverrides/{overrideId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

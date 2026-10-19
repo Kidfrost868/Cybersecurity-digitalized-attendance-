@@ -79,6 +79,14 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
 
   useEffect(() => {
     loadStudents();
+    const unsubscribe = AttendanceApiService.subscribeToStudents((updatedList) => {
+      setStudents(updatedList);
+    });
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const handleOpenAdd = () => {

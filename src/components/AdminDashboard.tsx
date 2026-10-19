@@ -25,6 +25,9 @@ import {
   Navigation,
   AlertTriangle,
   ShieldCheck,
+  Radio,
+  Check,
+  Crosshair,
 } from 'lucide-react';
 import { AttendanceApiService } from '../services/api.ts';
 import {
@@ -33,6 +36,7 @@ import {
   FlaggedProxyAttempt,
   Student,
   Course,
+  LocationOverride,
 } from '../types/attendance.ts';
 import { CourseLedgerView } from './CourseLedgerView.tsx';
 
@@ -58,24 +62,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [durationMinutes, setDurationMinutes] = useState(5);
   const [passcodeIntervalSeconds, setPasscodeIntervalSeconds] = useState(60); // 1 minute default
 
-  // Dynamic GPS Geofencing Coordinates (60m radius)
+  // Dynamic GPS Geofencing Coordinates (50m strict radius)
   const [adminLat, setAdminLat] = useState<number>(7.6983);
   const [adminLng, setAdminLng] = useState<number>(4.4239);
-  const [geofenceRadius, setGeofenceRadius] = useState<number>(60);
+  const [geofenceRadius, setGeofenceRadius] = useState<number>(50);
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [isCapturingGps, setIsCapturingGps] = useState<boolean>(false);
-  const [gpsStatusMsg, setGpsStatusMsg] = useState<string>("Redeemer's University Ede Campus (7.6983° N, 4.4239° E)");
+  const [gpsStatusMsg, setGpsStatusMsg] = useState<string>("Redeemer's University Cyber Range Lab (7.6983° N, 4.4239° E)");
 
   // Active Session & Live Data
   const [activeSession, setActiveSession] = useState<AttendanceSession | null>(null);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [flaggedAttempts, setFlaggedAttempts] = useState<FlaggedProxyAttempt[]>([]);
+  const [locationOverrides, setLocationOverrides] = useState<LocationOverride[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'attendance' | 'ledger' | 'security' | 'config'>('attendance');
   const [isLoading, setIsLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // Quick In-Hall Override Desk State
+  const [quickOverrideJamb, setQuickOverrideJamb] = useState('');
+  const [quickOverrideReason, setQuickOverrideReason] = useState('Weak indoor GPS signal / visual presence verified');
 
   // In-App Confirmation Modal for Ending Session (replaces blocked window.confirm)
   const [showStopConfirmModal, setShowStopConfirmModal] = useState<boolean>(false);
@@ -97,7 +106,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         setAdminLat(pos.coords.latitude);
         setAdminLng(pos.coords.longitude);
         setGpsAccuracy(Math.round(pos.coords.accuracy));
-        setGpsStatusMsg(`Live Hall GPS Locked: ${pos.coords.latitude.toFixed(5)}° N, ${pos.coords.longitude.toFixed(5)}° E (±${Math.round(pos.coords.accuracy)}m)`);
+        setGpsStatusMsg(`Live Hall GPS Locked: ${pos.coords.latitude.toFixed(5)}° N, ${pos.coords.longitude.toFixed(5)}° E (±${Math.round(pos.coords.accuracy)}m confidence)`);
         setIsCapturingGps(false);
       },
       () => {
@@ -129,6 +138,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       if (recordsRes.ok) {
         const json = await recordsRes.json();
         if (json.flagged) setFlaggedAttempts(json.flagged);
+      }
+
+      // Fetch in-hall location overrides
+      if (proj.session) {
+        const ovrs = await AttendanceApiService.getLocationOverrides(proj.session.id);
+        setLocationOverrides(ovrs);
+      } else {
+        setLocationOverrides([]);
       }
     } catch {
       // Ignore
@@ -239,6 +256,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } catch {
       // Error
     }
+  };
+
+  // One-Tap In-Hall Override by Course Rep (for weak GPS indoors)
+  const handleGrantInHallOverride = async (jambRegNo: string, studentName?: string, deviceId?: string) => {
+    if (!activeSession) return;
+    try {
+      const res = await AttendanceApiService.grantLocationOverride({
+        sessionId: activeSession.id,
+        jambRegNo,
+        studentName,
+        deviceId,
+        reason: 'Course Rep verified physical attendance inside hall',
+      });
+      if (res.success) {
+        setActionSuccess(`In-Hall Clearance Granted: ${studentName || jambRegNo} can now check in.`);
+        refreshData();
+        setTimeout(() => setActionSuccess(null), 4000);
+      }
+    } catch {
+      // Error
+    }
+  };
+
+  const handleRevokeInHallOverride = async (jambRegNo: string, deviceId?: string) => {
+    if (!activeSession) return;
+    try {
+      await AttendanceApiService.revokeLocationOverride(activeSession.id, jambRegNo, deviceId);
+      setActionSuccess(`In-hall override revoked for ${jambRegNo}.`);
+      refreshData();
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch {
+      // Error
+    }
+  };
+
+  const handleQuickOverrideSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeSession || !quickOverrideJamb.trim()) return;
+    const cleanJamb = quickOverrideJamb.trim().toUpperCase();
+    const student = students.find(s => s.jambRegNo.toUpperCase() === cleanJamb || s.matricNo.toUpperCase() === cleanJamb);
+
+    await handleGrantInHallOverride(cleanJamb, student?.fullName, undefined);
+    setQuickOverrideJamb('');
   };
 
   // Export CSV Direct Download
@@ -389,11 +449,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <p className="text-xs text-slate-300 truncate font-medium">
                 {activeSession.courseTitle}
               </p>
-              <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pt-1">
-                <Building className="w-3 h-3 text-emerald-400" />
-                <span>{activeSession.hallLocation}</span>
+              <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="flex items-center gap-1">
+                  <Building className="w-3 h-3 text-emerald-400" />
+                  <span>{activeSession.hallLocation}</span>
+                </span>
                 <span>·</span>
-                <span>{activeSession.lecturerName}</span>
+                <span className="flex items-center gap-1 font-mono text-emerald-400">
+                  <Radio className="w-3 h-3" />
+                  <span>{activeSession.geofenceRadius || 50}m Perimeter Guard</span>
+                </span>
               </div>
             </div>
 
@@ -651,6 +716,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </button>
             </div>
 
+            {/* ONE-TAP IN-HALL OVERRIDE DESK */}
+            <div className="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+                  <span className="font-bold text-white text-xs uppercase tracking-wider">
+                    One-Tap In-Hall Override Desk (Weak Indoor GPS / Satellite Drift)
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300">
+                    {locationOverrides.length} Active Overrides
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-400">
+                  Allow students with weak indoor GPS to record attendance upon in-person confirmation
+                </span>
+              </div>
+
+              {/* Quick Search & Pre-Authorize Input */}
+              <form onSubmit={handleQuickOverrideSubmit} className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={quickOverrideJamb}
+                    onChange={(e) => setQuickOverrideJamb(e.target.value.toUpperCase())}
+                    placeholder="Enter JAMB or Matric to grant in-hall clearance..."
+                    className="w-full h-8 pl-8 pr-3 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder:text-slate-500 font-mono uppercase focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={!quickOverrideJamb.trim() || !activeSession}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Authorize In-Hall Pass</span>
+                </button>
+              </form>
+
+              {/* Active Overrides Chips */}
+              {locationOverrides.length > 0 && (
+                <div className="pt-1">
+                  <span className="text-[11px] font-semibold text-slate-400 block mb-1.5">
+                    Currently Cleared Students for Lecture #{activeSession?.lectureNumber || 1}:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {locationOverrides.map((ovr) => (
+                      <div
+                        key={ovr.id}
+                        className="p-1.5 pl-2.5 pr-1.5 bg-emerald-950/50 border border-emerald-500/30 rounded-lg text-xs flex items-center gap-2"
+                      >
+                        <div>
+                          <span className="font-semibold text-white block">{ovr.studentName}</span>
+                          <span className="font-mono text-[10px] text-emerald-400">{ovr.jambRegNo}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeInHallOverride(ovr.jambRegNo, ovr.deviceId)}
+                          className="px-1.5 py-0.5 bg-slate-800 hover:bg-red-900/60 text-slate-400 hover:text-red-300 rounded text-[10px] cursor-pointer"
+                          title="Revoke clearance"
+                        >
+                          Revoke
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-800/80">
               <table className="w-full text-left text-xs">
                 <thead>
@@ -659,7 +794,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <th className="py-2.5 px-3">Flagged Target</th>
                     <th className="py-2.5 px-3">Device Signature</th>
                     <th className="py-2.5 px-3">Blocked Violation Type</th>
-                    <th className="py-2.5 px-3 text-right">Defense Action</th>
+                    <th className="py-2.5 px-3 text-right">Defense & Override Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-850">
@@ -677,14 +812,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           {f.deviceId.substring(0, 10)}...
                         </td>
                         <td className="py-3 px-3">
-                          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-rose-500/10 text-rose-400 border border-rose-500/30">
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium ${
+                            f.reason === 'geofence_violation'
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                          }`}>
                             {f.reason.replace(/_/g, ' ').toUpperCase()}
                           </span>
+                          {f.distanceMeters !== undefined && (
+                            <span className="block text-[10px] font-mono text-slate-400 mt-0.5">
+                              Detected: {f.distanceMeters}m away (Limit: {activeSession?.geofenceRadius || 50}m)
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-3 text-right">
-                          <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-slate-800 text-amber-400 border border-slate-700">
-                            BLOCKED BY SHIELD
-                          </span>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-slate-800 text-amber-400 border border-slate-700">
+                              BLOCKED
+                            </span>
+                            {(f.reason === 'geofence_violation' || f.reason === 'location_permission_denied') && activeSession && (
+                              <button
+                                type="button"
+                                onClick={() => handleGrantInHallOverride(f.jambRegNo, f.studentName, f.deviceId)}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[11px] font-semibold flex items-center gap-1 cursor-pointer shadow-sm"
+                                title="Grant one-tap in-hall clearance"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Grant Override</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -822,6 +979,115 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   placeholder="e.g. Dr. E. O. Babalola"
                   className="w-full h-10 px-3 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:border-emerald-500"
                 />
+              </div>
+
+              {/* Strict 50m GPS Geofencing Configuration */}
+              <div className="sm:col-span-2 space-y-3 bg-slate-900/90 p-4 rounded-xl border border-emerald-500/40">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                      <Radio className="w-4 h-4 animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <span>Strict 50m GPS Geofence Hall Verification</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                          Anti-Proxy Location Guard
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        Locks check-in to the physical room perimeter. Submissions beyond 50m are rejected.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={captureCurrentGps}
+                    disabled={isCapturingGps}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0 self-start sm:self-auto"
+                  >
+                    {isCapturingGps ? (
+                      <>
+                        <RotateCcw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Locking Coordinates...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Crosshair className="w-3.5 h-3.5" />
+                        <span>Capture Live Podium GPS</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                  {/* Preset Campus Venues */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-300">
+                      Redeemer's Campus Venue Preset
+                    </label>
+                    <select
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'cyber_range') {
+                          setAdminLat(7.6983);
+                          setAdminLng(4.4239);
+                          setHallLocation("Redeemer's Cyber Range Lab");
+                          setGpsStatusMsg("Redeemer's Cyber Range Lab (7.6983° N, 4.4239° E)");
+                        } else if (val === 'fcdt_lab1') {
+                          setAdminLat(7.6986);
+                          setAdminLng(4.4241);
+                          setHallLocation("Faculty of Computing & Digital Tech Lab 1");
+                          setGpsStatusMsg("Faculty of Computing Lab 1 (7.6986° N, 4.4241° E)");
+                        } else if (val === 'boo_theatre') {
+                          setAdminLat(7.6978);
+                          setAdminLng(4.4232);
+                          setHallLocation("BOO Lecture Theatre A & B");
+                          setGpsStatusMsg("BOO Lecture Theatre (7.6978° N, 4.4232° E)");
+                        } else if (val === 'auditorium') {
+                          setAdminLat(7.6972);
+                          setAdminLng(4.4228);
+                          setHallLocation("Faculty Auditorium");
+                          setGpsStatusMsg("Faculty Auditorium (7.6972° N, 4.4228° E)");
+                        }
+                      }}
+                      className="w-full h-9 px-3 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs"
+                    >
+                      <option value="cyber_range">Redeemer's Cyber Range Lab (7.6983° N, 4.4239° E)</option>
+                      <option value="fcdt_lab1">FCDT Computing Lab 1 (7.6986° N, 4.4241° E)</option>
+                      <option value="boo_theatre">BOO Lecture Theatre A & B (7.6978° N, 4.4232° E)</option>
+                      <option value="auditorium">Faculty Auditorium (7.6972° N, 4.4228° E)</option>
+                    </select>
+                  </div>
+
+                  {/* Geofence Perimeter Radius */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-300">
+                      Geofence Radius (Distance Threshold)
+                    </label>
+                    <select
+                      value={geofenceRadius}
+                      onChange={(e) => setGeofenceRadius(Number(e.target.value))}
+                      className="w-full h-9 px-3 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs font-semibold text-emerald-400"
+                    >
+                      <option value={50}>50 Meters (Standard Hall & Lab Coverage — Recommended)</option>
+                      <option value={30}>30 Meters (Strict / Compact Lab Room)</option>
+                      <option value={75}>75 Meters (Large Amphitheater / Complex)</option>
+                      <option value={100}>100 Meters (Faculty Wing Coverage)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] font-mono text-slate-400 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <Navigation className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Center: {adminLat.toFixed(5)}° N, {adminLng.toFixed(5)}° E ({gpsStatusMsg})</span>
+                  </span>
+                  <span className="text-emerald-400 font-bold shrink-0 ml-2">
+                    Perimeter: {geofenceRadius}m
+                  </span>
+                </div>
               </div>
 
               {/* Attendance Verification & Security Policy Card */}
