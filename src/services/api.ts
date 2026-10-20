@@ -1070,6 +1070,44 @@ export class AttendanceApiService {
     return true;
   }
 
+  static async grantDeviceOverride(
+    deviceId: string,
+    reason?: string
+  ): Promise<boolean> {
+    const active = getStored<AttendanceSession | null>('active_session', null);
+    return this.overrideDevice(active?.id || 'all', deviceId, undefined, reason);
+  }
+
+  static async uploadCsv(
+    csvContent: string
+  ): Promise<{ success: boolean; count: number; error?: string }> {
+    try {
+      const lines = csvContent.split('\n');
+      const students: Partial<Student>[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const parts = line.split(',').map((p) => p.trim().replace(/^["']|["']$/g, ''));
+        if (parts.length >= 2) {
+          const jamb = parts[0];
+          const name = parts[1];
+          const matric = parts[2] || '';
+          if (jamb && name) {
+            students.push({ jambRegNo: jamb, fullName: name, matricNo: matric });
+          }
+        }
+      }
+      const res = await this.bulkImportStudents(students);
+      return { success: res.success, count: res.addedCount, error: res.error };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        count: 0,
+        error: err instanceof Error ? err.message : 'Failed to parse CSV',
+      };
+    }
+  }
+
   static async exportAttendanceCsv(sessionId?: string): Promise<Blob | null> {
     try {
       const token =

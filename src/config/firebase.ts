@@ -36,7 +36,7 @@ import {
   persistentMultipleTabManager,
   Firestore,
   doc,
-  getDocFromServer,
+  getDoc,
 } from 'firebase/firestore';
 import appletConfig from '../../firebase-applet-config.json';
 
@@ -72,7 +72,7 @@ export const firebaseApp: FirebaseApp = getApps().length === 0
 // 2. Initialize Firebase Auth
 export const auth: Auth = getAuth(firebaseApp);
 
-// 3. Initialize Cloud Firestore with offline local cache & multi-tab persistence
+// 3. Initialize Cloud Firestore with offline local cache & auto-detect long polling for iframe/proxy environments
 let firestoreDb: Firestore;
 try {
   firestoreDb = initializeFirestore(
@@ -81,6 +81,7 @@ try {
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager(),
       }),
+      experimentalAutoDetectLongPolling: true,
     },
     activeConfig.firestoreDatabaseId
   );
@@ -140,18 +141,15 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw new Error(JSON.stringify(errInfo));
 }
 
-// 4. Validate connection to Firestore on initialization
+// 4. Validate connection to Firestore on demand
 export async function testFirestoreConnection(): Promise<boolean> {
   try {
-    await getDocFromServer(doc(db, 'system', 'connection_test'));
-    return true;
+    const snap = await getDoc(doc(db, 'system', 'connection_test'));
+    return snap.exists();
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firestore is running in offline-first mode with local IndexedDB cache.');
+    if (error instanceof Error && error.message.includes('offline')) {
+      console.warn('Firestore is running in offline cache mode.');
     }
-    return true;
+    return false;
   }
 }
-
-// Run connection validation immediately on boot
-testFirestoreConnection().catch(() => {});

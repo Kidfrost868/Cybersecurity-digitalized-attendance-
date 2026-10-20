@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-  FileSpreadsheet,
   Download,
-  Users,
   CheckCircle2,
   AlertTriangle,
   XCircle,
   Search,
-  Filter,
   Calendar,
   BookOpen,
-  ArrowRight,
-  Sparkles,
-  TrendingUp,
   RefreshCw,
   PlusCircle,
   Plus,
   Trash2,
-  X,
 } from 'lucide-react';
 import { AttendanceApiService } from '../services/api.ts';
 import { Course, CourseLedger, AttendanceSession } from '../types/attendance.ts';
@@ -191,27 +184,27 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
   return (
     <div className="space-y-6 w-full max-w-full overflow-hidden">
       {/* Top Banner & Course Selector */}
-      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl w-full max-w-full overflow-hidden">
+      <div className="bg-[#111827] border border-white/[0.08] rounded-2xl p-5 sm:p-6 shadow-xl w-full max-w-full overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                Multi-Session Continuity Ledger
+              <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-medium">
+                Multi-Session Ledger
               </span>
-              <span className="text-xs text-slate-400">· Senate 75% Exam Eligibility Tracker</span>
+              <span className="text-xs text-slate-500">· Senate 75% Clearance Audit</span>
             </div>
             <h2 className="text-xl font-bold text-white tracking-tight">
-              Course Attendance Archives & Cumulative Matrices
+              Course Archives & Cumulative Matrices
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Select a course to view complete multi-session attendance history, continuous lecture accumulation, and student-by-student eligibility scorecard.
+              Select a course to view complete multi-session attendance history and individual eligibility scorecards.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             <button
               onClick={() => setIsAddCourseModalOpen(true)}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-md"
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-[0.98]"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Course</span>
@@ -221,12 +214,12 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
               <button
                 onClick={handleExportCsv}
                 disabled={isExporting || !ledger}
-                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                className="px-3.5 py-2 bg-[#0B0F17] hover:bg-slate-800 text-slate-200 border border-white/10 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {isExporting ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="w-3.5 h-3.5 text-emerald-400" />
                 )}
                 <span>Export Matrix CSV</span>
               </button>
@@ -235,18 +228,18 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
             {ledger && onStartLectureForCourse && (
               <button
                 onClick={() => onStartLectureForCourse(ledger.course)}
-                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3.5 py-2 bg-[#0B0F17] hover:bg-slate-800 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                 title={`Launch Lecture #${(ledger.totalLecturesHeld || 0) + 1} for ${ledger.course.code}`}
               >
                 <PlusCircle className="w-3.5 h-3.5" />
-                <span>Launch Next Lecture (#{ledger.totalLecturesHeld + 1})</span>
+                <span>Next Lecture (#{ledger.totalLecturesHeld + 1})</span>
               </button>
             )}
 
             {ledger && (
               <button
                 onClick={() => setDeletingCourse(ledger.course)}
-                className="p-2 bg-slate-900 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-500/40 rounded-xl text-xs transition-colors cursor-pointer ml-auto md:ml-0"
+                className="p-2 bg-[#0B0F17] hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-white/10 hover:border-rose-500/30 rounded-xl text-xs transition-colors cursor-pointer ml-auto md:ml-0"
                 title={`Delete ${ledger.course.code} from Ledger`}
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -255,9 +248,9 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
           </div>
         </div>
 
-        {/* Course Pills */}
+        {/* Course Pills / Switcher */}
         {courses.length > 0 && (
-          <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-800/80 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 mt-5 pt-4 border-t border-white/[0.06] overflow-x-auto pb-1">
             {courses.map((c) => {
               const isSelected = selectedCourseId === c.id;
               const isLive = activeSession?.courseCode.toUpperCase() === c.code.toUpperCase();
@@ -266,10 +259,10 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 <button
                   key={c.id}
                   onClick={() => setSelectedCourseId(c.id)}
-                  className={`px-3 py-2 rounded-xl text-xs font-medium transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
                     isSelected
-                      ? 'bg-emerald-600 text-white shadow-md font-semibold'
-                      : 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                      ? 'bg-emerald-600 text-white shadow-sm font-semibold'
+                      : 'bg-[#0B0F17] text-slate-300 hover:bg-slate-800 hover:text-white border border-white/10'
                   }`}
                 >
                   <span className="font-mono">{c.code}</span>
@@ -283,7 +276,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
 
             <button
               onClick={() => setIsAddCourseModalOpen(true)}
-              className="px-3 py-2 rounded-xl text-xs font-medium bg-slate-900 text-emerald-400 hover:bg-slate-800 border border-emerald-500/30 hover:border-emerald-500/60 transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl text-xs font-medium bg-[#0B0F17] text-emerald-400 hover:bg-slate-800 border border-emerald-500/20 hover:border-emerald-500/40 transition-all shrink-0 flex items-center gap-1 cursor-pointer"
             >
               <Plus className="w-3 h-3" />
               <span>Add Course</span>
@@ -294,20 +287,20 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
 
       {/* Empty State when no courses configured */}
       {!isLoading && courses.length === 0 && (
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center shadow-xl space-y-4 max-w-xl mx-auto my-8">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
-            <BookOpen className="w-8 h-8" />
+        <div className="bg-[#111827] border border-white/[0.08] rounded-2xl p-10 text-center shadow-xl space-y-4 max-w-xl mx-auto my-8">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <BookOpen className="w-7 h-7" />
           </div>
           <div className="space-y-1.5">
             <h3 className="text-lg font-bold text-white tracking-tight">Course Ledger is Empty</h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-              All previous test courses have been cleared. As the Class Rep, click below to add your courses (e.g. CYB 401, CYB 201) to begin tracking multi-session attendance records and Senate 75% exam eligibility.
+              Add semester courses (e.g. CYB 201, CYB 401) to begin tracking multi-session attendance records and Senate 75% exam clearance.
             </p>
           </div>
           <div className="pt-2">
             <button
               onClick={() => setIsAddCourseModalOpen(true)}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-lg shadow-emerald-950/50 cursor-pointer"
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2 transition-all shadow-sm cursor-pointer active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               <span>Add First Course</span>
@@ -318,9 +311,9 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
 
       {/* Loading state */}
       {isLoading && (
-        <div className="p-8 text-center bg-slate-950 border border-slate-800 rounded-2xl">
-          <RefreshCw className="w-6 h-6 animate-spin text-emerald-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-400">Loading course ledger & session history...</p>
+        <div className="p-8 text-center bg-[#111827] border border-white/[0.08] rounded-2xl">
+          <RefreshCw className="w-5 h-5 animate-spin text-emerald-400 mx-auto mb-2" />
+          <p className="text-xs text-slate-400">Loading course ledger & session history...</p>
         </div>
       )}
 
@@ -329,59 +322,59 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
         <div className="space-y-6">
           {/* Summary KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-md">
+            <div className="bg-[#111827] border border-white/[0.08] rounded-xl p-4 shadow-sm">
               <div className="text-xs text-slate-400 font-medium">Lectures Conducted</div>
-              <div className="text-2xl font-bold text-white font-mono mt-1">
+              <div className="text-2xl font-bold text-white font-mono mt-1 tabular-nums">
                 {ledger.totalLecturesHeld}
                 <span className="text-xs text-slate-500 font-normal ml-1">sessions</span>
               </div>
-              <div className="text-[11px] text-emerald-400 mt-1">Continuous Accumulation</div>
+              <div className="text-[11px] text-emerald-400 mt-1">Continuous Record</div>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-md">
+            <div className="bg-[#111827] border border-white/[0.08] rounded-xl p-4 shadow-sm">
               <div className="text-xs text-slate-400 font-medium">Average Turnout</div>
-              <div className="text-2xl font-bold text-emerald-400 font-mono mt-1">
+              <div className="text-2xl font-bold text-emerald-400 font-mono mt-1 tabular-nums">
                 {ledger.averageAttendanceRate}%
               </div>
-              <div className="text-[11px] text-slate-400 mt-1">Across all sessions</div>
+              <div className="text-[11px] text-slate-500 mt-1">Across all lectures</div>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-md">
+            <div className="bg-[#111827] border border-white/[0.08] rounded-xl p-4 shadow-sm">
               <div className="text-xs text-slate-400 font-medium">Exam Eligible (&ge;75%)</div>
-              <div className="text-2xl font-bold text-emerald-400 font-mono mt-1">
+              <div className="text-2xl font-bold text-emerald-400 font-mono mt-1 tabular-nums">
                 {ledger.eligibleStudentsCount}
                 <span className="text-xs text-slate-500 font-normal ml-1">
                   / {ledger.totalStudents}
                 </span>
               </div>
-              <div className="text-[11px] text-emerald-400/80 mt-1">Senate Benchmark Met</div>
+              <div className="text-[11px] text-emerald-400/80 mt-1">Senate Standard Met</div>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-md">
+            <div className="bg-[#111827] border border-white/[0.08] rounded-xl p-4 shadow-sm">
               <div className="text-xs text-slate-400 font-medium">At Risk (50-74%)</div>
-              <div className="text-2xl font-bold text-amber-400 font-mono mt-1">
+              <div className="text-2xl font-bold text-amber-400 font-mono mt-1 tabular-nums">
                 {ledger.atRiskStudentsCount}
               </div>
               <div className="text-[11px] text-amber-400/80 mt-1">Warning Threshold</div>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-md col-span-2 lg:col-span-1">
+            <div className="bg-[#111827] border border-white/[0.08] rounded-xl p-4 shadow-sm col-span-2 lg:col-span-1">
               <div className="text-xs text-slate-400 font-medium">Barred (&lt;50%)</div>
-              <div className="text-2xl font-bold text-rose-400 font-mono mt-1">
+              <div className="text-2xl font-bold text-rose-400 font-mono mt-1 tabular-nums">
                 {ledger.ineligibleStudentsCount}
               </div>
               <div className="text-[11px] text-rose-400/80 mt-1">Requires Intervention</div>
             </div>
           </div>
 
-          {/* Chronological Session Timeline Chips */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 shadow-md">
+          {/* Chronological Session Timeline */}
+          <div className="bg-[#111827] border border-white/[0.08] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Lecture Timeline ({ledger.sessions.length} Recorded Sessions)</span>
               </h3>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-xs text-slate-400">
                 Lecturer: <strong className="text-slate-200">{ledger.course.lecturerName}</strong>
               </span>
             </div>
@@ -391,19 +384,19 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 const countPresent = ledger.students.filter(
                   (s) => s.sessionAttendance[sess.id]
                 ).length;
-                const turnoutPct = ((countPresent / ledger.totalStudents) * 100).toFixed(0);
+                const turnoutPct = ((countPresent / (ledger.totalStudents || 1)) * 100).toFixed(0);
 
                 return (
                   <div
                     key={sess.id}
-                    className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between"
+                    className="p-3 rounded-xl bg-[#0B0F17] border border-white/[0.06] flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between text-xs font-mono mb-1">
                         <span className="font-bold text-white">Lecture #{sess.lectureNumber}</span>
-                        <span className="text-emerald-400 font-semibold">{turnoutPct}%</span>
+                        <span className="text-emerald-400 font-semibold tabular-nums">{turnoutPct}%</span>
                       </div>
-                      <div className="text-[11px] text-slate-400 font-mono">
+                      <div className="text-[11px] text-slate-500 font-mono">
                         {new Date(sess.startTime).toLocaleDateString('en-GB', {
                           day: 'numeric',
                           month: 'short',
@@ -411,10 +404,10 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                         })}
                       </div>
                     </div>
-                    <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-                      <span>{sess.hallLocation}</span>
-                      <span className="font-mono text-slate-300">
-                        {countPresent}/{ledger.totalStudents} present
+                    <div className="mt-2 pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400">
+                      <span className="truncate max-w-[120px]">{sess.hallLocation}</span>
+                      <span className="font-mono text-slate-300 tabular-nums">
+                        {countPresent}/{ledger.totalStudents}
                       </span>
                     </div>
                   </div>
@@ -424,16 +417,16 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
           </div>
 
           {/* Matrix Search & Filters */}
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+          <div className="bg-[#111827] border border-white/[0.08] rounded-2xl p-5 shadow-xl">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
               <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
                   placeholder="Filter student name or JAMB..."
-                  className="w-full bg-slate-900 border border-slate-700/80 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-[#0B0F17] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
@@ -441,7 +434,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
                 <button
                   onClick={() => setStatusFilter('all')}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0 ${
                     statusFilter === 'all'
                       ? 'bg-slate-800 text-white font-semibold'
                       : 'text-slate-400 hover:text-white'
@@ -451,50 +444,49 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 </button>
                 <button
                   onClick={() => setStatusFilter('eligible')}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0 flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0 flex items-center gap-1 ${
                     statusFilter === 'eligible'
-                      ? 'bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/40'
+                      ? 'bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30'
                       : 'text-emerald-400/70 hover:text-emerald-400'
                   }`}
                 >
-                  <CheckCircle2 className="w-3 h-3" />
+                  <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Eligible ({ledger.eligibleStudentsCount})</span>
                 </button>
                 <button
                   onClick={() => setStatusFilter('at_risk')}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0 flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0 flex items-center gap-1 ${
                     statusFilter === 'at_risk'
-                      ? 'bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/40'
+                      ? 'bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/30'
                       : 'text-amber-400/70 hover:text-amber-400'
                   }`}
                 >
-                  <AlertTriangle className="w-3 h-3" />
+                  <AlertTriangle className="w-3.5 h-3.5" />
                   <span>At Risk ({ledger.atRiskStudentsCount})</span>
                 </button>
                 <button
                   onClick={() => setStatusFilter('ineligible')}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0 flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0 flex items-center gap-1 ${
                     statusFilter === 'ineligible'
-                      ? 'bg-rose-500/20 text-rose-400 font-semibold border border-rose-500/40'
+                      ? 'bg-rose-500/20 text-rose-400 font-semibold border border-rose-500/30'
                       : 'text-rose-400/70 hover:text-rose-400'
                   }`}
                 >
-                  <XCircle className="w-3 h-3" />
+                  <XCircle className="w-3.5 h-3.5" />
                   <span>Barred ({ledger.ineligibleStudentsCount})</span>
                 </button>
               </div>
             </div>
 
             {/* Matrix Table */}
-            <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-800">
+            <div className="w-full max-w-full overflow-x-auto rounded-xl border border-white/[0.06]">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900 text-slate-400 uppercase font-mono border-b border-slate-800">
+                <thead className="bg-[#0B0F17] text-slate-400 uppercase font-mono border-b border-white/[0.06] text-[11px]">
                   <tr>
                     <th className="px-3 py-3 w-12 text-center">S/N</th>
                     <th className="px-3 py-3 min-w-[160px]">Student Full Name</th>
                     <th className="px-3 py-3 min-w-[120px]">JAMB Reg No</th>
                     <th className="px-3 py-3 min-w-[110px]">Matric No</th>
-                    {/* Columns for each lecture */}
                     {ledger.sessions.map((s) => (
                       <th
                         key={s.id}
@@ -506,39 +498,38 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                     ))}
                     <th className="px-3 py-3 text-center min-w-[80px]">Total Signed</th>
                     <th className="px-3 py-3 text-center min-w-[70px]">Rate (%)</th>
-                    <th className="px-3 py-3 text-right min-w-[110px]">Senate Status</th>
+                    <th className="px-3 py-3 text-right min-w-[110px]">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80 font-sans">
+                <tbody className="divide-y divide-white/[0.04]">
                   {filteredStudents.map((row, idx) => (
-                    <tr key={row.student.jambRegNo} className="hover:bg-slate-900/60 transition-colors">
+                    <tr key={row.student.jambRegNo} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-3 py-2.5 text-center font-mono text-slate-500">
                         {idx + 1}
                       </td>
-                      <td className="px-3 py-2.5 font-medium text-white">
+                      <td className="px-3 py-2.5 font-medium text-white whitespace-nowrap">
                         {row.student.fullName}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-slate-300">
+                      <td className="px-3 py-2.5 font-mono text-slate-300 whitespace-nowrap">
                         {row.student.jambRegNo}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-slate-400">
+                      <td className="px-3 py-2.5 font-mono text-slate-400 whitespace-nowrap">
                         {row.student.matricNo}
                       </td>
-                      {/* Attendance dot/badge for each lecture */}
                       {ledger.sessions.map((s) => {
                         const attended = row.sessionAttendance[s.id];
                         return (
                           <td key={s.id} className="px-2 py-2.5 text-center">
                             {attended ? (
                               <span
-                                className="inline-block w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold leading-4"
+                                className="inline-block w-4 h-4 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold leading-4"
                                 title={`Lecture #${s.lectureNumber}: Present`}
                               >
                                 ✓
                               </span>
                             ) : (
                               <span
-                                className="inline-block w-4 h-4 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[10px] font-bold leading-4"
+                                className="inline-block w-4 h-4 rounded-md bg-white/[0.04] text-slate-600 border border-white/[0.06] text-[10px] leading-4"
                                 title={`Lecture #${s.lectureNumber}: Absent`}
                               >
                                 –
@@ -547,10 +538,10 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                           </td>
                         );
                       })}
-                      <td className="px-3 py-2.5 text-center font-mono font-bold text-white">
+                      <td className="px-3 py-2.5 text-center font-mono font-bold text-white tabular-nums">
                         {row.attendedCount} / {row.totalLectures}
                       </td>
-                      <td className="px-3 py-2.5 text-center font-mono font-bold">
+                      <td className="px-3 py-2.5 text-center font-mono font-bold tabular-nums">
                         <span
                           className={
                             row.attendanceRate >= 75
@@ -563,17 +554,17 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                           {row.attendanceRate}%
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-right">
+                      <td className="px-3 py-2.5 text-right whitespace-nowrap">
                         {row.statusTier === 'eligible' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                          <span className="text-xs font-mono text-emerald-400">
                             Eligible
                           </span>
                         ) : row.statusTier === 'at_risk' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                          <span className="text-xs font-mono text-amber-400">
                             At Risk
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                          <span className="text-xs font-mono text-rose-400">
                             Barred
                           </span>
                         )}
@@ -596,22 +587,23 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
           </div>
         </div>
       )}
+
       {/* MODAL: ADD COURSE */}
       {isAddCourseModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <form
             onSubmit={handleCreateCourse}
-            className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in fade-in duration-150"
+            className="bg-[#111827] border border-white/[0.1] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in fade-in duration-150"
           >
-            <div className="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-800">
-              <span className="font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+            <div className="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-white/[0.06]">
+              <span className="font-semibold text-white flex items-center gap-1.5">
                 <Plus className="w-4 h-4 text-emerald-400" />
                 Add Course to Attendance Ledger
               </span>
               <button
                 type="button"
                 onClick={() => setIsAddCourseModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -627,7 +619,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 onChange={(e) => setNewCourseCode(e.target.value.toUpperCase())}
                 placeholder="e.g. CYB 401"
                 required
-                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:border-emerald-500 uppercase"
+                className="w-full h-9 px-3 rounded-lg bg-[#0B0F17] border border-white/10 text-white font-mono text-xs focus:border-emerald-500 uppercase transition-colors"
               />
             </div>
 
@@ -641,7 +633,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 onChange={(e) => setNewCourseTitle(e.target.value)}
                 placeholder="e.g. Advanced Penetration Testing & Ethical Hacking"
                 required
-                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+                className="w-full h-9 px-3 rounded-lg bg-[#0B0F17] border border-white/10 text-white text-xs focus:border-emerald-500 transition-colors"
               />
             </div>
 
@@ -655,7 +647,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                   value={newLecturerName}
                   onChange={(e) => setNewLecturerName(e.target.value)}
                   placeholder="e.g. Dr. E. O. Babalola"
-                  className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+                  className="w-full h-9 px-3 rounded-lg bg-[#0B0F17] border border-white/10 text-white text-xs focus:border-emerald-500 transition-colors"
                 />
               </div>
 
@@ -668,7 +660,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                   value={newHallLocation}
                   onChange={(e) => setNewHallLocation(e.target.value)}
                   placeholder="e.g. Redeemer's Cyber Range Lab"
-                  className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+                  className="w-full h-9 px-3 rounded-lg bg-[#0B0F17] border border-white/10 text-white text-xs focus:border-emerald-500 transition-colors"
                 />
               </div>
             </div>
@@ -682,7 +674,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 value={newDepartment}
                 onChange={(e) => setNewDepartment(e.target.value)}
                 placeholder="Cybersecurity"
-                className="w-full h-9 px-3 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-emerald-500"
+                className="w-full h-9 px-3 rounded-lg bg-[#0B0F17] border border-white/10 text-white text-xs focus:border-emerald-500 transition-colors"
               />
             </div>
 
@@ -690,7 +682,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
               <button
                 type="submit"
                 disabled={isSubmittingCourse}
-                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>{isSubmittingCourse ? 'Creating...' : 'Create Course'}</span>
@@ -698,7 +690,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddCourseModalOpen(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[#0B0F17] hover:bg-slate-800 border border-white/10 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -709,8 +701,8 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
 
       {/* MODAL: DELETE COURSE CONFIRMATION */}
       {deletingCourse && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#111827] border border-white/[0.1] rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in duration-150">
             <div className="flex items-center gap-2.5 text-rose-400">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <h3 className="font-bold text-white text-sm">Delete Course from Ledger?</h3>
@@ -720,7 +712,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
               Are you sure you want to remove <strong className="text-white">{deletingCourse.code}</strong> ({deletingCourse.title}) from the Course Ledger?
             </p>
 
-            <div className="p-3 bg-rose-950/30 border border-rose-500/30 rounded-xl text-[11px] text-rose-300">
+            <div className="p-3 bg-rose-950/20 border border-rose-500/20 rounded-xl text-[11px] text-rose-300">
               This will remove this course from the cumulative matrix view.
             </div>
 
@@ -729,7 +721,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 type="button"
                 onClick={handleConfirmDeleteCourse}
                 disabled={isDeletingCourse}
-                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>{isDeletingCourse ? 'Deleting...' : 'Yes, Delete Course'}</span>
@@ -737,7 +729,7 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
               <button
                 type="button"
                 onClick={() => setDeletingCourse(null)}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[#0B0F17] hover:bg-slate-800 border border-white/10 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
               >
                 Cancel
               </button>

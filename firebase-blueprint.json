@@ -53,16 +53,13 @@
         "previousPasscode": { "type": "string", "description": "Previous interval 4-digit PIN." },
         "passcodeRotatedAt": { "type": "number", "description": "Timestamp when PIN last changed." },
         "passcodeExpiresAt": { "type": "number", "description": "Timestamp when PIN expires." },
-        "passcodeIntervalMs": { "type": "number", "description": "PIN rotation interval (e.g. 60000ms)." },
-        "latitude": { "type": "number", "description": "Center latitude coordinate of the lecture hall." },
-        "longitude": { "type": "number", "description": "Center longitude coordinate of the lecture hall." },
-        "geofenceRadius": { "type": "number", "description": "Allowed physical radius in meters (50m)." }
+        "passcodeIntervalMs": { "type": "number", "description": "PIN rotation interval (e.g. 60000ms)." }
       },
       "required": ["id", "courseCode", "status", "startTime", "expiresAt"]
     },
     "attendanceRecord": {
       "title": "AttendanceRecord",
-      "description": "Accredited physical check-in record for a student in a lecture session.",
+      "description": "Accredited check-in record for a student in a lecture session.",
       "type": "object",
       "properties": {
         "id": { "type": "string", "description": "Unique check-in receipt ID." },
@@ -78,10 +75,7 @@
         "deviceInfo": { "type": "string", "description": "Hardware/browser summary." },
         "hardwareHash": { "type": "string", "description": "Canvas/GPU hardware signature." },
         "timestamp": { "type": "number", "description": "Submission timestamp." },
-        "status": { "type": "string", "enum": ["verified", "flagged", "manual_override"] },
-        "distanceMeters": { "type": "number", "description": "Calculated distance from lecture hall center." },
-        "userLat": { "type": "number", "description": "Student device latitude." },
-        "userLng": { "type": "number", "description": "Student device longitude." }
+        "status": { "type": "string", "enum": ["verified", "flagged"] }
       },
       "required": ["id", "sessionId", "jambRegNo", "studentName", "timestamp", "status"]
     },
@@ -98,9 +92,6 @@
         "deviceId": { "type": "string", "description": "Device fingerprint." },
         "hardwareHash": { "type": "string", "description": "Hardware signature." },
         "timestamp": { "type": "number", "description": "Timestamp." },
-        "userLat": { "type": "number", "description": "Detected latitude." },
-        "userLng": { "type": "number", "description": "Detected longitude." },
-        "distanceMeters": { "type": "number", "description": "Detected distance from lecture hall." },
         "reason": {
           "type": "string",
           "enum": [
@@ -113,29 +104,11 @@
             "rate_limit_exceeded",
             "hardware_spoofing_detected",
             "unauthorized_admin_attempt",
-            "input_tamper_attempt",
-            "geofence_violation",
-            "location_permission_denied"
+            "input_tamper_attempt"
           ]
         }
       },
       "required": ["id", "sessionId", "jambRegNo", "timestamp", "reason"]
-    },
-    "locationOverride": {
-      "title": "LocationOverride",
-      "description": "Session-scoped physical hall clearance granted by the Course Rep for weak indoor GPS.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "description": "Unique override ID." },
-        "sessionId": { "type": "string", "description": "Session ID." },
-        "jambRegNo": { "type": "string", "description": "Student JAMB registration number." },
-        "studentName": { "type": "string", "description": "Student name." },
-        "matricNo": { "type": "string", "description": "Student matric number." },
-        "deviceId": { "type": "string", "description": "Authorized device fingerprint." },
-        "grantedAt": { "type": "number", "description": "Timestamp granted." },
-        "reason": { "type": "string", "description": "Justification for in-hall override." }
-      },
-      "required": ["id", "sessionId", "jambRegNo", "grantedAt"]
     }
   },
   "firestore": {
@@ -157,11 +130,7 @@
     },
     "/flaggedAttempts/{flagId}": {
       "schema": "flaggedAttempt",
-      "description": "Security logs of blocked proxy attempts and geofence violations."
-    },
-    "/locationOverrides/{overrideId}": {
-      "schema": "locationOverride",
-      "description": "Course Rep manual in-hall clearance passes for weak GPS."
+      "description": "Security logs of blocked proxy attempts."
     }
   }
 }

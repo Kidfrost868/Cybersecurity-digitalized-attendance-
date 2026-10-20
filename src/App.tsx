@@ -141,7 +141,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#0B0F17] text-[#F9FAFB] flex flex-col font-sans selection:bg-emerald-500/20 antialiased">
       {/* Hide navbar only in projector mode for clean lecture hall projection */}
       {activeTab !== 'projector' && (
         <Navbar

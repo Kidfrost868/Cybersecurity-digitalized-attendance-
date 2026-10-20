@@ -49,7 +49,6 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
     setIsTesting(true);
     setTestResult(null);
     try {
-      // Intentionally call protected endpoint without Authorization header
       const res = await fetch('/api/students/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,7 +60,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
         httpStatus: res.status,
         message: data.message || 'Server responded',
         details: res.status === 401
-          ? 'PASSED: Server rejected unauthenticated browser call with HTTP 401 Unauthorized and logged an intrusion flag.'
+          ? 'PASSED: Server rejected unauthenticated browser call with HTTP 401 Unauthorized.'
           : 'Warning: Call was not blocked.',
       });
       AttendanceApiService.getSecurityAudit().then(setAuditData);
@@ -82,7 +81,6 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
     setIsTesting(true);
     setTestResult(null);
     try {
-      // Intentionally send XSS script payload in JAMB number
       const res = await fetch('/api/check-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -101,7 +99,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
         httpStatus: res.status,
         message: data.message || 'Server responded',
         details: res.status === 400
-          ? 'PASSED: Server input sanitization & regex validator caught the script tag and rejected the payload with HTTP 400.'
+          ? 'PASSED: Server regex validator caught script tag and rejected payload with HTTP 400.'
           : 'Warning: Payload was not flagged.',
       });
       AttendanceApiService.getSecurityAudit().then(setAuditData);
@@ -122,7 +120,6 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
     setIsTesting(true);
     setTestResult(null);
     try {
-      // Send deliberate wrong passcode with fake JAMB to test server verification
       const res = await fetch('/api/check-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -157,19 +154,19 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="bg-[#111827] border border-white/[0.1] rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-3">
+        <div className="px-5 sm:px-6 py-4 bg-[#0E1420] border-b border-white/[0.08] flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-semibold text-white truncate">RUN CyberPass Security Shield</h3>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold shrink-0">
-                  Active
+                <h3 className="text-sm sm:text-base font-bold text-white truncate">RUN CyberPass Security Architecture</h3>
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium shrink-0">
+                  Enforced
                 </span>
               </div>
               <p className="text-[11px] sm:text-xs text-slate-400 truncate">Anti-Proxy Single-Device Lock & 1-Minute Rotating PINs</p>
@@ -184,7 +181,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Tab Controls */}
-        <div className="flex border-b border-slate-800 bg-slate-950/50 px-3 sm:px-6 gap-3 sm:gap-4 text-xs font-medium overflow-x-auto w-full">
+        <div className="flex border-b border-white/[0.08] bg-[#0B0F17] px-4 sm:px-6 gap-4 text-xs font-medium overflow-x-auto w-full">
           <button
             onClick={() => setActiveTab('architecture')}
             className={`py-3 border-b-2 cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
@@ -218,97 +215,98 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Body Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 flex-1 text-sm">
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1 text-sm">
           {activeTab === 'architecture' && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {/* 1. Zero-Trust Admin Auth */}
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="p-4 rounded-xl bg-[#0B0F17] border border-white/[0.06] space-y-1.5">
                   <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
                     <KeyRound className="w-4 h-4" />
                     <span>1. Zero-Trust Server Admin Guard</span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Even if a student uses Chrome DevTools Console (<code className="text-emerald-300 bg-slate-900 px-1 py-0.5 rounded">fetch</code>), all admin actions (session start, student roster edits, CSV export) strictly reject requests without a cryptographic Bearer token.
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    All administrative actions (session start, student roster edits, CSV export) reject unauthenticated requests without an authorized session Bearer token.
                   </p>
                 </div>
 
                 {/* 2. Hardware Multi-Entropy Lock */}
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="p-4 rounded-xl bg-[#0B0F17] border border-white/[0.06] space-y-1.5">
                   <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
                     <Cpu className="w-4 h-4" />
-                    <span>2. Hardware & GPU Canvas Fingerprinting</span>
+                    <span>2. Hardware Fingerprinting</span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Single-device locking is bound to GPU WebGL renderer, 2D Canvas rendering, screen resolution, and CPU concurrency. Clearing browser cookies or opening Incognito tabs does not bypass device locking.
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Single-device locking is bound to GPU WebGL renderer, 2D Canvas rendering, and screen resolution. Clearing browser cookies or opening Incognito tabs does not bypass device locking.
                   </p>
                 </div>
 
                 {/* 3. Brute-Force Rate Limiting */}
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="p-4 rounded-xl bg-[#0B0F17] border border-white/[0.06] space-y-1.5">
                   <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
                     <ShieldAlert className="w-4 h-4" />
-                    <span>3. Brute-Force 3-Strike Lockout Engine</span>
+                    <span>3. Brute-Force Rate Limiting</span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Passcode guessing scripts are blocked. If 3 incorrect PIN attempts occur within 60 seconds from any device or IP, the server activates a strict 2-minute lockout with HTTP 429 Too Many Requests.
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Passcode guessing scripts are blocked. If 3 incorrect PIN attempts occur within 60 seconds from any device, the server triggers a 2-minute lockout.
                   </p>
                 </div>
 
                 {/* 4. Strict Input Sanitization */}
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="p-4 rounded-xl bg-[#0B0F17] border border-white/[0.06] space-y-1.5">
                   <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
                     <FileCode className="w-4 h-4" />
                     <span>4. Strict Regex & Injection Shield</span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    JAMB numbers are validated server-side against <code className="text-emerald-300 bg-slate-900 px-1 py-0.5 rounded">/^[A-Za-z0-9/]{'{6,20}'}$/</code> and passcodes against <code className="text-emerald-300 bg-slate-900 px-1 py-0.5 rounded">/^\d{'{4}'}$/</code>. HTML tags and SQL injections are rejected.
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    JAMB numbers and PINs are validated server-side against strict alphanumeric formats. Script tags, HTML markup, and malicious inputs are automatically rejected.
                   </p>
                 </div>
 
                 {/* 5. 60-Second Rolling Passcodes */}
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="p-4 rounded-xl bg-[#0B0F17] border border-white/[0.06] space-y-1.5">
                   <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
                     <Clock className="w-4 h-4" />
                     <span>5. 60-Second Rolling Passcodes</span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Passcodes change every 1 minute. Students attempting to share PINs via WhatsApp will find that codes expire rapidly. The server enforces a tight 1-interval latency grace period.
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Passcodes rotate every 60 seconds on the projector screen, preventing remote PIN sharing via group chats.
                   </p>
                 </div>
 
                 {/* 6. Authoritative Server Clock */}
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="p-4 rounded-xl bg-[#0B0F17] border border-white/[0.06] space-y-1.5">
                   <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
                     <Lock className="w-4 h-4" />
-                    <span>6. Server-Authoritative Clock & Duplicate Block</span>
+                    <span>6. Authoritative Server Clock</span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Students cannot manipulate their phone clock to fake check-in times. When the 5-minute session ends, the server instantly rejects further submissions. Duplicate check-ins per session are blocked.
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    Device system clocks are ignored. The server clock authoritatively seals sessions and blocks duplicate check-ins.
                   </p>
                 </div>
               </div>
 
               {/* Your Active Device Fingerprint Snapshot */}
-              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-emerald-500/20 text-xs space-y-2">
+              <div className="p-4 rounded-xl bg-[#0B0F17] border border-emerald-500/20 text-xs space-y-2">
                 <div className="flex items-center justify-between text-slate-300 font-medium">
                   <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                     <Fingerprint className="w-4 h-4" />
-                    Your Live Hardware Security Profile
+                    <span>Active Hardware Security Profile</span>
                   </span>
-                  <span className="font-mono text-[11px] text-slate-400">Bound to physical hardware</span>
+                  <span className="font-mono text-[11px] text-slate-500">Bound to physical hardware</span>
                 </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px]">
-                  <div className="bg-slate-900 p-2 rounded border border-slate-800">
-                    <span className="text-slate-400 block text-[10px]">DEVICE UUID:</span>
+                  <div className="bg-[#111827] p-2.5 rounded-lg border border-white/[0.06]">
+                    <span className="text-slate-500 block text-[10px]">DEVICE UUID:</span>
                     <span className="text-emerald-300 truncate block">{deviceSecurity.deviceId.slice(0, 16)}...</span>
                   </div>
-                  <div className="bg-slate-900 p-2 rounded border border-slate-800">
-                    <span className="text-slate-400 block text-[10px]">HARDWARE SIGNATURE:</span>
+                  <div className="bg-[#111827] p-2.5 rounded-lg border border-white/[0.06]">
+                    <span className="text-slate-500 block text-[10px]">HARDWARE SIGNATURE:</span>
                     <span className="text-emerald-300 truncate block">{deviceSecurity.hardwareHash}</span>
                   </div>
-                  <div className="bg-slate-900 p-2 rounded border border-slate-800">
-                    <span className="text-slate-400 block text-[10px]">DEVICE SPEC:</span>
+                  <div className="bg-[#111827] p-2.5 rounded-lg border border-white/[0.06]">
+                    <span className="text-slate-500 block text-[10px]">DEVICE SPEC:</span>
                     <span className="text-slate-300 truncate block">{deviceSecurity.deviceInfo}</span>
                   </div>
                 </div>
@@ -318,45 +316,45 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
 
           {activeTab === 'sandbox' && (
             <div className="space-y-4">
-              <p className="text-xs text-slate-300">
-                Test the system’s defense mechanisms in real-time. Click any simulated attack below to see how the server detects and blocks malicious browser actions.
+              <p className="text-xs text-slate-400">
+                Test the system’s defense mechanisms in real-time. Click any simulated test below to see how the server detects and blocks unauthorized requests.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   onClick={runTestUnauthorizedApi}
                   disabled={isTesting}
-                  className="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-left transition-all hover:bg-slate-900 cursor-pointer disabled:opacity-50"
+                  className="p-3.5 rounded-xl bg-[#0B0F17] border border-white/[0.08] hover:border-emerald-500/40 text-left transition-all hover:bg-slate-900 cursor-pointer disabled:opacity-50"
                 >
-                  <div className="flex items-center gap-2 text-xs font-semibold text-rose-400 pb-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-400 pb-1">
                     <Play className="w-3.5 h-3.5" />
                     <span>Probe 1: Rep Hijack</span>
                   </div>
                   <p className="text-[11px] text-slate-400">
-                    Attempts calling <code className="text-slate-200">/api/students/reset</code> without Course Rep password.
+                    Attempts calling <code className="text-slate-300">/api/students/reset</code> without Course Rep password.
                   </p>
                 </button>
 
                 <button
                   onClick={runTestMaliciousInput}
                   disabled={isTesting}
-                  className="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-left transition-all hover:bg-slate-900 cursor-pointer disabled:opacity-50"
+                  className="p-3.5 rounded-xl bg-[#0B0F17] border border-white/[0.08] hover:border-emerald-500/40 text-left transition-all hover:bg-slate-900 cursor-pointer disabled:opacity-50"
                 >
-                  <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 pb-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 pb-1">
                     <Play className="w-3.5 h-3.5" />
                     <span>Probe 2: Script Injection</span>
                   </div>
                   <p className="text-[11px] text-slate-400">
-                    Injects <code className="text-slate-200">&lt;script&gt;</code> tags into the JAMB submission field.
+                    Injects <code className="text-slate-300">&lt;script&gt;</code> tags into the JAMB submission field.
                   </p>
                 </button>
 
                 <button
                   onClick={runTestBruteForceProbe}
                   disabled={isTesting}
-                  className="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-left transition-all hover:bg-slate-900 cursor-pointer disabled:opacity-50"
+                  className="p-3.5 rounded-xl bg-[#0B0F17] border border-white/[0.08] hover:border-emerald-500/40 text-left transition-all hover:bg-slate-900 cursor-pointer disabled:opacity-50"
                 >
-                  <div className="flex items-center gap-2 text-xs font-semibold text-cyan-400 pb-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400 pb-1">
                     <Play className="w-3.5 h-3.5" />
                     <span>Probe 3: Unregistered PIN</span>
                   </div>
@@ -371,8 +369,8 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
                 <div
                   className={`p-4 rounded-xl border ${
                     testResult.status === 'blocked'
-                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
-                      : 'bg-rose-950/40 border-rose-500/40 text-rose-200'
+                      ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+                      : 'bg-rose-950/30 border-rose-500/30 text-rose-200'
                   } space-y-2`}
                 >
                   <div className="flex items-center justify-between text-xs font-bold">
@@ -382,14 +380,14 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
                       ) : (
                         <AlertTriangle className="w-4 h-4 text-rose-400" />
                       )}
-                      {testResult.testName}
+                      <span>{testResult.testName}</span>
                     </span>
-                    <span className="font-mono px-2 py-0.5 rounded bg-slate-900/60 border border-slate-800 text-[11px]">
+                    <span className="font-mono px-2 py-0.5 rounded bg-[#0B0F17] border border-white/10 text-[11px]">
                       HTTP {testResult.httpStatus}
                     </span>
                   </div>
                   <p className="text-xs">{testResult.details}</p>
-                  <div className="text-[11px] font-mono bg-slate-950/80 p-2 rounded border border-slate-800 text-slate-300">
+                  <div className="text-[11px] font-mono bg-[#0B0F17] p-2.5 rounded-lg border border-white/[0.06] text-slate-300">
                     Server Response: &quot;{testResult.message}&quot;
                   </div>
                 </div>
@@ -413,39 +411,39 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
               {auditData ? (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-white/[0.06]">
                       <span className="text-slate-400 block text-[11px]">Brute-Force Locked</span>
-                      <span className="text-xl font-bold font-mono text-emerald-400">
+                      <span className="text-xl font-bold font-mono text-emerald-400 tabular-nums">
                         {auditData.metrics.bruteForceBlocked}
                       </span>
                     </div>
-                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-white/[0.06]">
                       <span className="text-slate-400 block text-[11px]">Hardware Spoofs Blocked</span>
-                      <span className="text-xl font-bold font-mono text-emerald-400">
+                      <span className="text-xl font-bold font-mono text-emerald-400 tabular-nums">
                         {auditData.metrics.hardwareSpoofBlocked}
                       </span>
                     </div>
-                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-white/[0.06]">
                       <span className="text-slate-400 block text-[11px]">Unauthorized API Probes</span>
-                      <span className="text-xl font-bold font-mono text-rose-400">
+                      <span className="text-xl font-bold font-mono text-rose-400 tabular-nums">
                         {auditData.metrics.unauthorizedProbes}
                       </span>
                     </div>
-                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                      <span className="text-slate-400 block text-[11px]">Malicious Inputs Neutralized</span>
-                      <span className="text-xl font-bold font-mono text-amber-400">
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-white/[0.06]">
+                      <span className="text-slate-400 block text-[11px]">Malicious Inputs Blocked</span>
+                      <span className="text-xl font-bold font-mono text-amber-400 tabular-nums">
                         {auditData.metrics.tamperBlocked}
                       </span>
                     </div>
-                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-white/[0.06]">
                       <span className="text-slate-400 block text-[11px]">Single-Device Violations</span>
-                      <span className="text-xl font-bold font-mono text-cyan-400">
+                      <span className="text-xl font-bold font-mono text-cyan-400 tabular-nums">
                         {auditData.metrics.duplicateBlocked}
                       </span>
                     </div>
-                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div className="bg-[#0B0F17] p-3 rounded-xl border border-white/[0.06]">
                       <span className="text-slate-400 block text-[11px]">Total Security Alerts</span>
-                      <span className="text-xl font-bold font-mono text-white">
+                      <span className="text-xl font-bold font-mono text-white tabular-nums">
                         {auditData.metrics.totalFlagged}
                       </span>
                     </div>
@@ -454,7 +452,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
                   <div className="space-y-2">
                     <h4 className="text-xs font-semibold text-slate-300">Recent Thwarted Tampering Events</h4>
                     {auditData.recentViolations.length === 0 ? (
-                      <div className="text-xs text-slate-500 py-3 text-center bg-slate-950 rounded-xl border border-slate-800">
+                      <div className="text-xs text-slate-500 py-4 text-center bg-[#0B0F17] rounded-xl border border-white/[0.06]">
                         No malicious attempts recorded yet in this session.
                       </div>
                     ) : (
@@ -462,7 +460,7 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
                         {auditData.recentViolations.map((v) => (
                           <div
                             key={v.id}
-                            className="bg-slate-950 p-2 rounded-lg border border-slate-800 flex items-center justify-between"
+                            className="bg-[#0B0F17] p-2 rounded-lg border border-white/[0.06] flex items-center justify-between"
                           >
                             <span className="text-rose-400 font-bold uppercase">{v.reason.replace(/_/g, ' ')}</span>
                             <span className="text-slate-400">{v.jambRegNo}</span>
@@ -481,13 +479,13 @@ export const SecurityModal: React.FC<SecurityModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-          <span>Enterprise University Anti-Proxy Standard</span>
+        <div className="px-6 py-3 bg-[#0E1420] border-t border-white/[0.08] flex items-center justify-between text-xs text-slate-400">
+          <span>RUN CyberPass · University Anti-Proxy Standard</span>
           <button
             onClick={onClose}
             className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors cursor-pointer"
           >
-            Close Security Shield
+            Close
           </button>
         </div>
       </div>

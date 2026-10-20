@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import {
   ShieldCheck,
-  MapPin,
   Clock,
   Smartphone,
   X,
   CheckCircle2,
   AlertTriangle,
-  BookOpen,
   ArrowRight,
   Sparkles,
   Lock,
@@ -46,29 +44,29 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       subtitle: "Redeemer's University · Department of Cybersecurity",
       icon: ShieldCheck,
       color: 'text-emerald-400',
-      bgColor: 'bg-emerald-500/10 border-emerald-500/30',
+      bgColor: 'bg-emerald-500/10 border-emerald-500/20',
       content: (
         <div className="space-y-3.5 text-xs text-slate-300">
           <p className="leading-relaxed">
-            <strong className="text-white">RUN CyberPass</strong> is the official lecture attendance verification platform engineered exclusively for <span className="text-emerald-400 font-semibold">Cybersecurity students</span> at Redeemer's University (RUN), Ede.
+            <strong className="text-white">RUN CyberPass</strong> is the official lecture attendance platform engineered exclusively for <span className="text-emerald-400 font-semibold">Cybersecurity students</span> at Redeemer's University (RUN), Ede.
           </p>
-          <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2">
+          <div className="p-3.5 bg-[#0B0F17] rounded-xl border border-white/[0.06] space-y-2">
             <div className="flex items-center gap-2 text-white font-semibold">
               <Sparkles className="w-4 h-4 text-emerald-400" />
               <span>Anti-Proxy Security Architecture</span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Traditional paper sign-in sheets and shared codes are susceptible to proxy signing. RUN CyberPass combines 60-meter dynamic GPS verification, rotating projector PINs, and single-device hardware binding to guarantee authentic attendance records.
+              Traditional paper sign-in sheets and shared static codes are susceptible to proxy signing. RUN CyberPass combines rotating projector PINs and single-device hardware binding to guarantee authentic student presence.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 text-[11px]">
-            <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50">
-              <span className="text-slate-400 block font-mono">FACULTY</span>
-              <span className="text-white font-semibold">Computing & Digital Technology</span>
+            <div className="p-2.5 rounded-lg bg-[#0B0F17] border border-white/[0.06]">
+              <span className="text-slate-500 block font-mono">FACULTY</span>
+              <span className="text-white font-semibold">Computing & Digital Tech</span>
             </div>
-            <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50">
-              <span className="text-slate-400 block font-mono">CAMPUS</span>
-              <span className="text-white font-semibold">Ede Main Campus, Osun</span>
+            <div className="p-2.5 rounded-lg bg-[#0B0F17] border border-white/[0.06]">
+              <span className="text-slate-500 block font-mono">CAMPUS</span>
+              <span className="text-white font-semibold">Ede Main Campus</span>
             </div>
           </div>
         </div>
@@ -78,55 +76,55 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       title: 'Anti-Proxy Device Lock',
       subtitle: 'Single Device per Student Policy',
       icon: Lock,
-      color: 'text-cyan-400',
-      bgColor: 'bg-cyan-500/10 border-cyan-500/30',
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/10 border-emerald-500/20',
       content: (
         <div className="space-y-3.5 text-xs text-slate-300">
           <p className="leading-relaxed">
-            Each student must check in using their own personal smartphone. Anti-proxy hardware locking prevents signing in for multiple students.
+            Each student must check in using their own personal smartphone. Anti-proxy hardware locking prevents signing in for multiple coursemates.
           </p>
-          <div className="p-3 bg-cyan-950/30 rounded-xl border border-cyan-500/30 space-y-2">
-            <div className="flex items-center gap-2 text-cyan-300 font-semibold">
-              <ShieldCheck className="w-4 h-4 text-cyan-400" />
+          <div className="p-3.5 bg-[#0B0F17] rounded-xl border border-white/[0.06] space-y-2">
+            <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+              <ShieldCheck className="w-4 h-4" />
               <span>Cryptographic Device Binding</span>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
+            <p className="text-[11px] text-slate-400 leading-relaxed">
               When you record attendance with your JAMB registration number, your device fingerprint is locked to your identity for that lecture session.
             </p>
           </div>
           <div className="p-3 bg-amber-950/30 rounded-xl border border-amber-500/30 flex items-start gap-2.5 text-amber-200 text-[11px]">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <p>
-              <strong>Zero Proxy Tolerance:</strong> Attempting to sign in for a coursemate using the same phone is automatically detected and blocked by the system shield.
+              <strong>Zero Proxy Tolerance:</strong> Attempting to sign in for a coursemate using the same phone is automatically detected and blocked by the security shield.
             </p>
           </div>
         </div>
       ),
     },
     {
-      title: 'Rolling PINs & Device Locking',
-      subtitle: 'Zero-Proxy Anti-Tamper Safeguards',
+      title: 'Rolling PINs & Passcode Security',
+      subtitle: '60-Second Rotation Window',
       icon: Clock,
-      color: 'text-amber-400',
-      bgColor: 'bg-amber-500/10 border-amber-500/30',
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/10 border-emerald-500/20',
       content: (
-        <div className="space-y-3 text-xs text-slate-300">
-          <div className="space-y-2">
+        <div className="space-y-3.5 text-xs text-slate-300">
+          <div className="p-3.5 bg-[#0B0F17] rounded-xl border border-white/[0.06] space-y-1.5">
             <div className="flex items-center gap-2 text-white font-semibold">
-              <Clock className="w-4 h-4 text-amber-400" />
+              <Clock className="w-4 h-4 text-emerald-400" />
               <span>1-Minute Rotating Passcodes</span>
             </div>
             <p className="text-[11px] text-slate-400">
-              The 4-digit PIN displayed on the lecture hall screen rotates every 60 seconds. Coursemates cannot forward codes across WhatsApp or Telegram because they expire almost immediately.
+              The 4-digit PIN displayed on the lecture hall screen rotates every 60 seconds. Coursemates cannot forward codes across messaging apps because they expire rapidly.
             </p>
           </div>
-          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+          <div className="p-3.5 bg-[#0B0F17] rounded-xl border border-white/[0.06] space-y-1.5">
             <div className="flex items-center gap-2 text-white font-semibold">
               <Lock className="w-4 h-4 text-emerald-400" />
-              <span>Single-Device Cryptographic Locking</span>
+              <span>Grace Period Protection</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Each student must use their own smartphone. Once your phone verifies your JAMB number, it is cryptographically locked for that lecture session. Attempting to sign in for a friend using the same device triggers an immediate security alert.
+              To prevent issues if a passcode rotates right as you tap submit, the system accepts the immediately preceding passcode for a short grace window.
             </p>
           </div>
         </div>
@@ -136,23 +134,23 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       title: 'Install as a PWA Mobile App',
       subtitle: 'Instant Access on Android & iPhone',
       icon: Smartphone,
-      color: 'text-violet-400',
-      bgColor: 'bg-violet-500/10 border-violet-500/30',
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/10 border-emerald-500/20',
       content: (
         <div className="space-y-3.5 text-xs text-slate-300">
           <p className="leading-relaxed">
-            RUN CyberPass is a progressive web app. You do not need to download a heavy file from app stores — simply add it to your home screen!
+            RUN CyberPass is a Progressive Web App. You do not need to download an APK — simply add it to your home screen!
           </p>
-          <div className="p-3 bg-violet-950/30 rounded-xl border border-violet-500/30 space-y-2">
-            <div className="flex items-center gap-2 text-violet-300 font-semibold">
-              <CheckCircle2 className="w-4 h-4 text-violet-400" />
-              <span>Benefits of the PWA Version:</span>
+          <div className="p-3.5 bg-[#0B0F17] rounded-xl border border-white/[0.06] space-y-2">
+            <div className="flex items-center gap-2 text-white font-semibold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>PWA Mobile Advantages:</span>
             </div>
-            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-300">
-              <li>Full-screen native experience without browser search bars</li>
+            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-400">
+              <li>Full-screen native view without browser search bars</li>
               <li>Instant 1-tap launch from your phone home screen</li>
-              <li>Faster GPS sensor polling for reliable hall check-ins</li>
-              <li>Offline session status indicator and ledger cache</li>
+              <li>Reliable lecture hall check-ins and pass verification</li>
+              <li>Offline state indicators and ledger cache</li>
             </ul>
           </div>
           <div className="pt-1">
@@ -165,22 +163,21 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       title: 'Centralized Cloud Database',
       subtitle: 'Multi-Device Real-Time Sync with Firebase Firestore',
       icon: Cloud,
-      color: 'text-sky-400',
-      bgColor: 'bg-sky-500/10 border-sky-500/30',
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/10 border-emerald-500/20',
       content: (
         <div className="space-y-3.5 text-xs text-slate-300">
           <p className="leading-relaxed">
             All student rosters, active lecture sessions, verified attendance records, and in-hall passes are stored centrally in <strong className="text-white">Google Cloud Firestore</strong>.
           </p>
-          <div className="p-3 bg-sky-950/30 rounded-xl border border-sky-500/30 space-y-2">
-            <div className="flex items-center gap-2 text-sky-300 font-semibold">
-              <Cloud className="w-4 h-4 text-sky-400" />
+          <div className="p-3.5 bg-[#0B0F17] rounded-xl border border-white/[0.06] space-y-2">
+            <div className="flex items-center gap-2 text-white font-semibold">
+              <Cloud className="w-4 h-4 text-emerald-400" />
               <span>Multi-Device Synchronization:</span>
             </div>
-            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-300">
-              <li><strong>Cross-Device:</strong> When a Course Rep adds students or starts a lecture, all devices update instantly without page reloads.</li>
-              <li><strong>Offline Persistence:</strong> If lecture theatre internet connectivity fluctuates, check-ins are cached locally in IndexedDB and automatically sync once reconnected.</li>
-              <li><strong>Standalone Setup:</strong> If self-hosting, simply paste your Firebase project keys into <code className="text-emerald-400">src/config/firebase.ts</code>.</li>
+            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-400">
+              <li><strong>Cross-Device:</strong> When a Course Rep starts a lecture, all devices update instantly in real time.</li>
+              <li><strong>Offline Persistence:</strong> If lecture theatre internet connectivity fluctuates, check-ins are cached locally and automatically sync.</li>
             </ul>
           </div>
         </div>
@@ -192,17 +189,17 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const Icon = current.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl text-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+      <div className="w-full max-w-lg rounded-2xl bg-[#111827] border border-white/[0.1] shadow-2xl text-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Top Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60 gap-3">
+        <div className="p-5 border-b border-white/[0.08] flex items-center justify-between bg-[#0E1420] gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center shrink-0 ${current.bgColor} ${current.color}`}>
+            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${current.bgColor} ${current.color}`}>
               <Icon className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate">{current.title}</h2>
-              <p className="text-[11px] sm:text-xs text-slate-400 truncate">{current.subtitle}</p>
+              <h2 className="text-base font-bold text-white tracking-tight truncate">{current.title}</h2>
+              <p className="text-xs text-slate-400 truncate">{current.subtitle}</p>
             </div>
           </div>
           <button
@@ -215,7 +212,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         </div>
 
         {/* Step Progress Indicators */}
-        <div className="grid grid-cols-4 gap-1 p-2 bg-slate-950/90 border-b border-slate-800/80">
+        <div className="grid grid-cols-5 gap-1.5 p-2.5 bg-[#0B0F17] border-b border-white/[0.06]">
           {steps.map((st, i) => (
             <button
               key={i}
@@ -224,8 +221,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 i === activeStep
                   ? 'bg-emerald-400'
                   : i < activeStep
-                  ? 'bg-emerald-600/60'
-                  : 'bg-slate-800'
+                  ? 'bg-emerald-600/50'
+                  : 'bg-white/10'
               }`}
               title={st.title}
             />
@@ -233,13 +230,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+        <div className="p-6 overflow-y-auto space-y-4 flex-1">
           {current.content}
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/70 flex items-center justify-between gap-3">
-          <div className="text-[11px] text-slate-500 font-mono">
+        <div className="p-4 border-t border-white/[0.08] bg-[#0E1420] flex items-center justify-between gap-3">
+          <div className="text-xs text-slate-500 font-mono">
             Step {activeStep + 1} of {steps.length}
           </div>
 
@@ -248,7 +245,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveStep(prev => prev - 1)}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition cursor-pointer"
+                className="px-3.5 py-2 bg-[#0B0F17] hover:bg-slate-800 border border-white/10 text-slate-300 rounded-xl text-xs font-medium transition cursor-pointer"
               >
                 Back
               </button>
@@ -258,7 +255,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveStep(prev => prev + 1)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-950"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.98]"
               >
                 <span>Next</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -267,7 +264,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <button
                 type="button"
                 onClick={handleFinish}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-lg shadow-emerald-950"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-[0.98]"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Get Started</span>

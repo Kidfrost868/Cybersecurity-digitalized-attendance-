@@ -35,10 +35,5 @@ service cloud.firestore {
       allow update, delete: if true;
     }
 
-    // Course Rep in-hall manual location overrides
-    match /locationOverrides/{overrideId} {
-      allow read: if true;
-      allow write: if true;
-    }
   }
 }
