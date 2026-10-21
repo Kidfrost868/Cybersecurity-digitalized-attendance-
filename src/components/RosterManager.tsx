@@ -425,27 +425,47 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
                 {filteredStudents.length > 0 ? (
-                  filteredStudents.map((s, idx) => (
-                    <tr key={s.jambRegNo} className="hover:bg-white/[0.02] transition-colors">
+                  filteredStudents.map((s, idx) => {
+                    const primaryId = s.jambRegNo !== 'NULL' ? s.jambRegNo : s.matricNo;
+                    return (
+                    <tr key={primaryId} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-3 px-3 font-mono text-slate-500">{idx + 1}</td>
                       <td className="py-3 px-3 font-mono text-emerald-400 font-medium whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          <span>{s.jambRegNo}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyJamb(s.jambRegNo)}
-                            className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
-                            title="Copy JAMB number"
-                          >
-                            <Copy className="w-3 h-3" />
-                          </button>
+                          <span className={s.jambRegNo === 'NULL' ? 'text-slate-500 font-mono text-xs' : ''}>
+                            {s.jambRegNo}
+                          </span>
+                          {s.jambRegNo !== 'NULL' && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyJamb(s.jambRegNo)}
+                              className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+                              title="Copy JAMB number"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          )}
                           {copiedJamb === s.jambRegNo && (
                             <span className="text-[10px] text-emerald-400 font-sans">Copied!</span>
                           )}
                         </div>
                       </td>
                       <td className="py-3 px-3 font-mono text-slate-300 whitespace-nowrap">
-                        {s.matricNo}
+                        <div className="flex items-center gap-1.5">
+                          <span className={s.matricNo === 'NULL' ? 'text-slate-500 font-mono text-xs' : ''}>
+                            {s.matricNo}
+                          </span>
+                          {s.matricNo !== 'NULL' && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyJamb(s.matricNo)}
+                              className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+                              title="Copy Matric number"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-3 font-medium text-white whitespace-nowrap">
                         {s.fullName}
@@ -479,7 +499,7 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
                           {onSelectStudentForCheckIn && (
                             <button
                               type="button"
-                              onClick={() => onSelectStudentForCheckIn(s.jambRegNo)}
+                              onClick={() => onSelectStudentForCheckIn(primaryId)}
                               className="text-[11px] px-2.5 py-1 rounded-lg bg-[#0B0F17] hover:bg-emerald-600 hover:text-white text-emerald-400 border border-white/10 transition-colors inline-flex items-center gap-1 cursor-pointer ml-1 active:scale-[0.98]"
                             >
                               <span>Check In</span>
@@ -489,7 +509,8 @@ export const RosterManager: React.FC<RosterManagerProps> = ({
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={7} className="py-12 px-4 text-center">

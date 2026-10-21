@@ -27,13 +27,11 @@ export default function App() {
   useEffect(() => {
     setIsAdminAuthenticated(AttendanceApiService.isAdminAuthenticated());
     try {
-      // Force clean slate for student list across sessions per user request
-      const cleanSlateVersion = localStorage.getItem('unipass_clean_slate_v3');
-      if (!cleanSlateVersion) {
+      // Seed 79 accredited students into roster cache
+      const rosterVersion = localStorage.getItem('unipass_roster_79_v1');
+      if (!rosterVersion) {
         localStorage.removeItem('unipass_students');
-        localStorage.removeItem('unipass_records');
-        localStorage.removeItem('unipass_flagged');
-        localStorage.setItem('unipass_clean_slate_v3', 'true');
+        localStorage.setItem('unipass_roster_79_v1', 'true');
       }
 
       const seen = localStorage.getItem('run_cyberpass_onboarding_seen');

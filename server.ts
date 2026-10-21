@@ -34,8 +34,8 @@ function getPasscodeForInterval(sessionId: string, intervalIndex: number): strin
   return codeNum.toString();
 }
 
-// In-Memory Database Store - completely clean per user request
-let masterStudents: Student[] = [];
+// In-Memory Database Store - initialized with official 79 students
+let masterStudents: Student[] = [...SEED_STUDENTS];
 
 // Registered Courses for Redeemer's University Cybersecurity Department (Faculty of Computing & Digital Technology)
 // Starts completely clean per user request
@@ -447,8 +447,17 @@ async function startServer() {
     }
 
     // Student identity check
+    if (cleanJamb === 'NULL') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid registration number.',
+        errorCode: 'INPUT_VALIDATION_ERROR',
+      });
+    }
+
     const student = masterStudents.find(
-      s => s.jambRegNo.toUpperCase() === cleanJamb || s.matricNo.toUpperCase() === cleanJamb
+      s => (s.jambRegNo && s.jambRegNo !== 'NULL' && s.jambRegNo.toUpperCase() === cleanJamb) ||
+           (s.matricNo && s.matricNo !== 'NULL' && s.matricNo.toUpperCase() === cleanJamb)
     );
     if (!student) {
       tracker.attempts += 1;
@@ -464,7 +473,7 @@ async function startServer() {
       });
       return res.status(404).json({
         success: false,
-        message: `JAMB Reg No "${cleanJamb}" is not registered on the official course roster.`,
+        message: `Identifier "${cleanJamb}" is not registered on the official course roster.`,
         errorCode: 'STUDENT_NOT_FOUND',
       });
     }
@@ -516,7 +525,11 @@ async function startServer() {
 
     // Check duplicate student attendance for THIS session
     const existingStudentSubmission = attendanceRecords.find(
-      r => r.sessionId === session.id && r.jambRegNo === student.jambRegNo
+      r => r.sessionId === session.id && (
+        (student.jambRegNo !== 'NULL' && r.jambRegNo === student.jambRegNo) ||
+        (student.matricNo !== 'NULL' && r.matricNo === student.matricNo) ||
+        (r.studentName.toUpperCase() === student.fullName.toUpperCase())
+      )
     );
     if (existingStudentSubmission) {
       return res.status(400).json({
@@ -530,7 +543,9 @@ async function startServer() {
     const uuidLockKey = `${session.id}:${cleanDeviceId}`;
     const existingUuidLock = deviceLocks.get(uuidLockKey);
     if (existingUuidLock && !existingUuidLock.overrideGranted) {
-      if (existingUuidLock.jambRegNo !== student.jambRegNo) {
+      const isSameStudent = (student.jambRegNo !== 'NULL' && existingUuidLock.jambRegNo === student.jambRegNo) ||
+                            (existingUuidLock.studentName.toUpperCase() === student.fullName.toUpperCase());
+      if (!isSameStudent) {
         flaggedAttempts.push({
           id: 'flag-' + Date.now(),
           sessionId: session.id,
@@ -554,7 +569,9 @@ async function startServer() {
       const hwLockKey = `${session.id}:${cleanHardwareHash}`;
       const existingHwLock = hardwareLocks.get(hwLockKey);
       if (existingHwLock && !existingHwLock.overrideGranted) {
-        if (existingHwLock.jambRegNo !== student.jambRegNo) {
+        const isSameStudentHw = (student.jambRegNo !== 'NULL' && existingHwLock.jambRegNo === student.jambRegNo) ||
+                                (existingHwLock.studentName.toUpperCase() === student.fullName.toUpperCase());
+        if (!isSameStudentHw) {
           flaggedAttempts.push({
             id: 'flag-hw-' + Date.now(),
             sessionId: session.id,
@@ -640,11 +657,12 @@ async function startServer() {
   // 7. Student Lookup by JAMB / Matric (Handles slashes like RUN/CYB/25/18825)
   const handleStudentLookup = (req: express.Request, res: express.Response) => {
     const query = extractStudentQuery(req);
-    if (!query || !isValidJamb(query)) {
+    if (!query || query === 'NULL' || !isValidJamb(query)) {
       return res.status(400).json({ found: false, message: 'Invalid registration format' });
     }
     const student = masterStudents.find(
-      s => s.jambRegNo.toUpperCase() === query || s.matricNo.toUpperCase() === query
+      s => (s.jambRegNo && s.jambRegNo !== 'NULL' && s.jambRegNo.toUpperCase() === query) ||
+           (s.matricNo && s.matricNo !== 'NULL' && s.matricNo.toUpperCase() === query)
     );
     if (!student) {
       return res.status(404).json({ found: false, message: `No student found for "${query}"` });
@@ -921,7 +939,11 @@ async function startServer() {
 
       courseSessions.forEach(session => {
         const isPresent = attendanceRecords.some(
-          r => r.sessionId === session.id && r.jambRegNo === student.jambRegNo
+          r => r.sessionId === session.id && (
+            (student.jambRegNo !== 'NULL' && r.jambRegNo === student.jambRegNo) ||
+            (student.matricNo !== 'NULL' && r.matricNo === student.matricNo) ||
+            (r.studentName.toUpperCase() === student.fullName.toUpperCase())
+          )
         );
         sessionAttendance[session.id] = isPresent;
         if (isPresent) attendedCount++;
@@ -988,8 +1010,16 @@ async function startServer() {
       });
     }
 
+    if (raw === 'NULL') {
+      return res.status(400).json({
+        found: false,
+        message: 'Student JAMB Registration Number or Matric Number is required.',
+      });
+    }
+
     const student = masterStudents.find(
-      s => s.jambRegNo.toUpperCase() === raw || s.matricNo.toUpperCase() === raw
+      s => (s.jambRegNo && s.jambRegNo !== 'NULL' && s.jambRegNo.toUpperCase() === raw) ||
+           (s.matricNo && s.matricNo !== 'NULL' && s.matricNo.toUpperCase() === raw)
     );
 
     if (!student) {
@@ -1054,7 +1084,11 @@ async function startServer() {
       let timesAttended = 0;
       const sessionAudits: LectureSessionAudit[] = courseSessions.map(session => {
         const record = attendanceRecords.find(
-          r => r.sessionId === session.id && r.jambRegNo.toUpperCase() === student.jambRegNo.toUpperCase()
+          r => r.sessionId === session.id && (
+            (student.jambRegNo !== 'NULL' && r.jambRegNo.toUpperCase() === student.jambRegNo.toUpperCase()) ||
+            (student.matricNo !== 'NULL' && r.matricNo.toUpperCase() === student.matricNo.toUpperCase()) ||
+            (r.studentName.toUpperCase() === student.fullName.toUpperCase())
+          )
         );
         const attended = !!record;
         if (attended) timesAttended++;

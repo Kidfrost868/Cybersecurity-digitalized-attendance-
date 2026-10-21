@@ -503,7 +503,10 @@ export const CourseLedgerView: React.FC<CourseLedgerViewProps> = ({
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
                   {filteredStudents.map((row, idx) => (
-                    <tr key={row.student.jambRegNo} className="hover:bg-white/[0.02] transition-colors">
+                    <tr
+                      key={row.student.jambRegNo !== 'NULL' ? row.student.jambRegNo : row.student.matricNo}
+                      className="hover:bg-white/[0.02] transition-colors"
+                    >
                       <td className="px-3 py-2.5 text-center font-mono text-slate-500">
                         {idx + 1}
                       </td>

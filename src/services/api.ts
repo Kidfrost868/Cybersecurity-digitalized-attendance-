@@ -199,6 +199,11 @@ export class AttendanceApiService {
         cloudStudents.sort((a, b) => a.fullName.localeCompare(b.fullName));
         setStored('students', cloudStudents);
         return cloudStudents;
+      } else if (SEED_STUDENTS.length > 0) {
+        // Auto-seed to Firestore if collection is empty
+        await this.syncLocalToFirestore(SEED_STUDENTS);
+        setStored('students', SEED_STUDENTS);
+        return SEED_STUDENTS;
       }
     } catch (err) {
       console.warn('Firestore getStudents read error, falling back to local cache/server:', err);
@@ -220,7 +225,13 @@ export class AttendanceApiService {
       // Local fallback
     }
 
-    return getStored<Student[]>('students', []);
+    const stored = getStored<Student[]>('students', SEED_STUDENTS);
+    if (stored.length === 0 && SEED_STUDENTS.length > 0) {
+      setStored('students', SEED_STUDENTS);
+      this.syncLocalToFirestore(SEED_STUDENTS).catch(() => {});
+      return SEED_STUDENTS;
+    }
+    return stored;
   }
 
   /**
@@ -230,9 +241,12 @@ export class AttendanceApiService {
     try {
       const batch = writeBatch(db);
       for (const s of students) {
-        if (s.jambRegNo) {
-          batch.set(doc(db, 'students', s.jambRegNo.toUpperCase()), s, { merge: true });
-        }
+        const docKey = (s.jambRegNo && s.jambRegNo !== 'NULL')
+          ? s.jambRegNo.toUpperCase()
+          : (s.matricNo && s.matricNo !== 'NULL')
+            ? s.matricNo.replace(/[^a-zA-Z0-9_-]/g, '_').toUpperCase()
+            : `student_${s.fullName.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+        batch.set(doc(db, 'students', docKey), s, { merge: true });
       }
       await batch.commit();
     } catch (err) {
@@ -718,11 +732,22 @@ export class AttendanceApiService {
     const flagged = getStored<FlaggedProxyAttempt[]>('flagged', []);
     const locks = getStored<Record<string, { jambRegNo: string; studentName: string; override: boolean }>>('device_locks', {});
 
-    const student = students.find((s) => s.jambRegNo.toUpperCase() === cleanJamb || s.matricNo.toUpperCase() === cleanJamb);
+    if (cleanJamb === 'NULL') {
+      return {
+        success: false,
+        message: 'Invalid registration number.',
+        errorCode: 'INPUT_VALIDATION_ERROR',
+      };
+    }
+
+    const student = students.find((s) => 
+      (s.jambRegNo && s.jambRegNo !== 'NULL' && s.jambRegNo.toUpperCase() === cleanJamb) ||
+      (s.matricNo && s.matricNo !== 'NULL' && s.matricNo.toUpperCase() === cleanJamb)
+    );
     if (!student) {
       return {
         success: false,
-        message: `JAMB Reg No '${cleanJamb}' is not in the accredited class list. Please confirm with your Course Rep.`,
+        message: `Registration identifier '${cleanJamb}' is not in the accredited class list. Please confirm with your Course Rep.`,
         errorCode: 'STUDENT_NOT_FOUND',
       };
     }
@@ -737,7 +762,7 @@ export class AttendanceApiService {
       const flagItem: FlaggedProxyAttempt = {
         id: 'flag-' + now,
         sessionId: session.id,
-        jambRegNo: student.jambRegNo,
+        jambRegNo: student.jambRegNo !== 'NULL' ? student.jambRegNo : student.matricNo,
         studentName: student.fullName,
         attemptedCode: cleanCode,
         deviceId: params.deviceId,
@@ -756,7 +781,11 @@ export class AttendanceApiService {
     }
 
     // Duplicate check
-    const existing = records.find((r) => r.sessionId === session.id && r.jambRegNo === student.jambRegNo);
+    const existing = records.find((r) => r.sessionId === session.id && (
+      (student.jambRegNo !== 'NULL' && r.jambRegNo === student.jambRegNo) ||
+      (student.matricNo !== 'NULL' && r.matricNo === student.matricNo) ||
+      (r.studentName.toUpperCase() === student.fullName.toUpperCase())
+    ));
     if (existing) {
       return {
         success: false,
@@ -770,7 +799,8 @@ export class AttendanceApiService {
     // Single-device check
     const lockKey = `${session.id}:${params.deviceId}`;
     const existingLock = locks[lockKey];
-    if (existingLock && !existingLock.override && existingLock.jambRegNo !== student.jambRegNo) {
+    const studentIdentifier = student.jambRegNo !== 'NULL' ? student.jambRegNo : student.matricNo;
+    if (existingLock && !existingLock.override && existingLock.jambRegNo !== studentIdentifier) {
       const flagItem: FlaggedProxyAttempt = {
         id: 'flag-' + now,
         sessionId: session.id,
@@ -904,8 +934,12 @@ export class AttendanceApiService {
       // Local fallback
     }
 
+    if (clean === 'NULL') return { found: false };
     const students = await this.getStudents();
-    const student = students.find((s) => s.jambRegNo.toUpperCase() === clean || s.matricNo.toUpperCase() === clean);
+    const student = students.find((s) => 
+      (s.jambRegNo && s.jambRegNo !== 'NULL' && s.jambRegNo.toUpperCase() === clean) ||
+      (s.matricNo && s.matricNo !== 'NULL' && s.matricNo.toUpperCase() === clean)
+    );
     if (!student) return { found: false };
     return {
       found: true,

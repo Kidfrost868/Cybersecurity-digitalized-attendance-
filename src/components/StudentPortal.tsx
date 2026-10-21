@@ -352,7 +352,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                Enter your accredited JAMB number and the live 4-digit PIN displayed on the lecture hall screen.
+                Enter your accredited JAMB number or Matric number, along with the live 4-digit PIN displayed on the lecture hall screen.
               </p>
             </div>
 
@@ -382,7 +382,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
               </div>
             )}
 
-            {/* JAMB Registration Number Field */}
+            {/* JAMB / Matric Registration Number Field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label
@@ -390,7 +390,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                   className="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
                 >
                   <User className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>JAMB Registration Number</span>
+                  <span>JAMB Reg No or Matric No</span>
                 </label>
                 {isLookingUp && (
                   <span className="text-[11px] text-slate-500 flex items-center gap-1 font-mono">
@@ -408,7 +408,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                   setJambRegNo(e.target.value.toUpperCase());
                   setErrorMessage(null);
                 }}
-                placeholder="e.g. 2024/104829AB"
+                placeholder="e.g. 202660213057AI or RUN/CYB/25/18805"
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
@@ -423,7 +423,9 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                     <div>
                       <span className="font-semibold text-white block">{resolvedStudent.fullName}</span>
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {resolvedStudent.matricNo || resolvedStudent.department}
+                        {resolvedStudent.matricNo && resolvedStudent.matricNo !== 'NULL'
+                          ? resolvedStudent.matricNo
+                          : resolvedStudent.department}
                       </span>
                     </div>
                   </div>
