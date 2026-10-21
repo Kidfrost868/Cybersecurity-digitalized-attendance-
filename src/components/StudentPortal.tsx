@@ -207,33 +207,33 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] w-full max-w-full overflow-x-hidden bg-[#0B0F17] text-[#F9FAFB] py-6 sm:py-10 px-4 sm:px-6 flex flex-col justify-start items-center">
+    <div className="min-h-[calc(100vh-4rem)] w-full max-w-full overflow-x-hidden bg-white text-slate-900 py-6 sm:py-10 px-4 sm:px-6 flex flex-col justify-start items-center">
       <div className="w-full max-w-lg mx-auto space-y-5">
 
         {/* Live Session Status Banner */}
         {activeSession && activeSession.status === 'active' ? (
-          <div className="bg-[#111827]/90 border border-white/[0.08] rounded-2xl p-4 sm:p-5 shadow-sm w-full backdrop-blur-md">
-            <div className="flex items-center justify-between text-xs text-slate-400 pb-3 border-b border-white/[0.06]">
-              <span className="font-semibold text-emerald-400 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="bg-blue-50/80 border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-xs w-full">
+            <div className="flex items-center justify-between text-xs text-slate-600 pb-3 border-b border-blue-200/60">
+              <span className="font-semibold text-blue-700 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
                 Active Attendance Window
               </span>
-              <span className="font-mono tabular-nums text-slate-300 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="font-mono tabular-nums text-slate-700 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-blue-600" />
                 <span>{sessionTimeLeft} remaining</span>
               </span>
             </div>
             <div className="pt-3 flex items-center justify-between gap-3 text-xs">
               <div className="min-w-0">
-                <span className="font-bold text-white block text-sm sm:text-base tracking-tight truncate">
+                <span className="font-bold text-slate-900 block text-sm sm:text-base tracking-tight truncate">
                   {activeSession.courseCode}
                 </span>
-                <span className="text-slate-400 text-xs truncate block max-w-[280px]">
+                <span className="text-slate-600 text-xs truncate block max-w-[280px]">
                   {activeSession.courseTitle}
                 </span>
               </div>
               <div className="text-right shrink-0">
-                <span className="text-emerald-400 font-mono font-medium text-xs block">
+                <span className="text-blue-700 font-mono font-medium text-xs block">
                   Lecture #{activeSession.lectureNumber || 1}
                 </span>
                 <span className="text-slate-500 text-[11px] block mt-0.5">
@@ -243,69 +243,69 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-[#111827]/60 border border-white/[0.06] rounded-2xl p-4 text-center text-xs text-slate-400">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center text-xs text-slate-500">
             <span>Waiting for Course Rep or Lecturer to launch a live attendance window...</span>
           </div>
         )}
 
         {/* Success Confirmation Card or Check-In Form */}
         {resultRecord ? (
-          <div className="bg-[#111827] border border-emerald-500/30 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200 w-full overflow-hidden">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto text-emerald-400">
+          <div className="bg-white border border-blue-200 rounded-2xl p-6 sm:p-8 shadow-lg space-y-6 animate-in fade-in zoom-in-95 duration-200 w-full overflow-hidden">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-center mx-auto text-blue-600">
               <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Attendance Recorded
               </h3>
-              <p className="text-xs text-emerald-400 font-medium">
+              <p className="text-xs text-blue-600 font-medium">
                 Accredited Student Presence Confirmed
               </p>
             </div>
 
             {/* Student Credential Slip */}
-            <div className="bg-[#0B0F17] border border-white/[0.08] rounded-xl p-4 space-y-3 text-xs">
-              <div className="flex justify-between items-center pb-2.5 border-b border-white/[0.06] gap-2">
-                <span className="text-slate-400 shrink-0">Student Name</span>
-                <span className="font-semibold text-white text-right truncate">{resultRecord.studentName}</span>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-xs">
+              <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 gap-2">
+                <span className="text-slate-500 shrink-0">Student Name</span>
+                <span className="font-semibold text-slate-900 text-right truncate">{resultRecord.studentName}</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-white/[0.06] gap-2">
-                <span className="text-slate-400 shrink-0">JAMB Reg No</span>
-                <span className="font-mono text-emerald-300 font-semibold text-right">{resultRecord.jambRegNo}</span>
+              <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 gap-2">
+                <span className="text-slate-500 shrink-0">JAMB Reg No</span>
+                <span className="font-mono text-blue-700 font-semibold text-right">{resultRecord.jambRegNo}</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-white/[0.06] gap-2">
-                <span className="text-slate-400 shrink-0">Matric No</span>
-                <span className="font-mono text-slate-200 text-right">{resultRecord.matricNo}</span>
+              <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 gap-2">
+                <span className="text-slate-500 shrink-0">Matric No</span>
+                <span className="font-mono text-slate-800 text-right">{resultRecord.matricNo}</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-white/[0.06] gap-2">
-                <span className="text-slate-400 shrink-0">Department</span>
-                <span className="text-slate-200 text-right truncate">{resultRecord.department}</span>
+              <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 gap-2">
+                <span className="text-slate-500 shrink-0">Department</span>
+                <span className="text-slate-800 text-right truncate">{resultRecord.department}</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-white/[0.06] gap-2">
-                <span className="text-slate-400 shrink-0">Security Protocol</span>
-                <span className="font-mono text-emerald-400 text-right">
+              <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 gap-2">
+                <span className="text-slate-500 shrink-0">Security Protocol</span>
+                <span className="font-mono text-blue-600 text-right">
                   Rolling PIN + Hardware Lock
                 </span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-white/[0.06] gap-2">
-                <span className="text-slate-400 shrink-0">Timestamp</span>
-                <span className="font-mono tabular-nums text-slate-300 text-right text-[11px] sm:text-xs">
+              <div className="flex justify-between items-center pb-2.5 border-b border-slate-200 gap-2">
+                <span className="text-slate-500 shrink-0">Timestamp</span>
+                <span className="font-mono tabular-nums text-slate-700 text-right text-[11px] sm:text-xs">
                   {new Date(resultRecord.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {new Date(resultRecord.timestamp).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-400 shrink-0">Security Hash</span>
-                <span className="font-mono text-[10px] text-slate-500 truncate text-right">
+                <span className="text-slate-500 shrink-0">Security Hash</span>
+                <span className="font-mono text-[10px] text-slate-400 truncate text-right">
                   {resultRecord.id.substring(0, 16)}
                 </span>
               </div>
             </div>
 
             {/* Anti-Proxy Device Badge */}
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300">
-              <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span>Single-Device Hardware Lock Verified. Submission securely synchronized.</span>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-2.5 text-xs text-blue-700">
+              <ShieldCheck className="w-4 h-4 shrink-0 text-blue-600" />
+              <span>Single-Device Hardware Lock Verified. Submission securely recorded.</span>
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
@@ -317,7 +317,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                     setResultRecord(null);
                     onGoToMyStats(j);
                   }}
-                  className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-[0.98]"
+                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-[0.98]"
                 >
                   <span>View Full Attendance History</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -330,7 +330,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                   setJambRegNo('');
                   setPinDigits(['', '', '', '']);
                 }}
-                className="py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition-colors cursor-pointer"
+                className="py-3 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -340,18 +340,18 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
           /* Main Check-In Form */
           <form
             onSubmit={handleSubmitCheckIn}
-            className="bg-[#111827] border border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-xl space-y-6 w-full overflow-hidden"
+            className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6 w-full overflow-hidden"
           >
             <div>
               <div className="flex items-center justify-between gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                   Student Check-In
                 </h1>
-                <span className="text-[11px] font-mono text-emerald-400">
+                <span className="text-[11px] font-mono text-blue-600 font-medium">
                   Single-Device Lock
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Enter your accredited JAMB number or Matric number, along with the live 4-digit PIN displayed on the lecture hall screen.
               </p>
             </div>
@@ -360,21 +360,21 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             {errorMessage && (
               <div className={`p-4 rounded-xl border text-xs flex items-start gap-3 ${
                 errorCode === 'DEVICE_LOCKED'
-                  ? 'bg-red-950/40 border-red-500/40 text-red-200'
+                  ? 'bg-red-50 border-red-200 text-red-700'
                   : errorCode === 'DUPLICATE_ENTRY'
-                  ? 'bg-amber-950/40 border-amber-500/40 text-amber-200'
-                  : 'bg-red-950/40 border-red-500/40 text-red-300'
+                  ? 'bg-amber-50 border-amber-200 text-amber-800'
+                  : 'bg-red-50 border-red-200 text-red-700'
               }`}>
-                <AlertCircle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-500 mt-0.5" />
                 <div className="space-y-1.5 flex-1">
                   <p className="font-semibold">{errorMessage}</p>
                   {errorCode === 'INVALID_CODE' && (
-                    <p className="text-slate-400 text-[11px]">
+                    <p className="text-slate-600 text-[11px]">
                       Tip: Passcodes rotate every 1 minute. Check the projector screen for the latest active PIN.
                     </p>
                   )}
                   {errorCode === 'DEVICE_LOCKED' && (
-                    <p className="text-slate-400 text-[11px]">
+                    <p className="text-slate-600 text-[11px]">
                       Single-Device Lock: This device has already been registered for another student during this lecture.
                     </p>
                   )}
@@ -387,14 +387,14 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="jambInput"
-                  className="text-xs font-semibold text-slate-300 flex items-center gap-1.5"
+                  className="text-xs font-semibold text-slate-700 flex items-center gap-1.5"
                 >
-                  <User className="w-3.5 h-3.5 text-emerald-400" />
+                  <User className="w-3.5 h-3.5 text-blue-600" />
                   <span>JAMB Reg No or Matric No</span>
                 </label>
                 {isLookingUp && (
                   <span className="text-[11px] text-slate-500 flex items-center gap-1 font-mono">
-                    <RefreshCw className="w-3 h-3 animate-spin text-emerald-400" />
+                    <RefreshCw className="w-3 h-3 animate-spin text-blue-600" />
                     Checking...
                   </span>
                 )}
@@ -412,24 +412,24 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
-                className="w-full h-12 px-4 rounded-xl bg-[#0B0F17] border border-white/[0.1] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white font-mono text-base uppercase tracking-wider placeholder:text-slate-600 transition-colors"
+                className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-slate-900 font-mono text-base uppercase tracking-wider placeholder:text-slate-400 transition-colors"
               />
 
               {/* Verified Student Preview Chip */}
               {resolvedStudent && (
-                <div className="p-3 bg-[#0B0F17] border border-emerald-500/30 rounded-xl flex items-center justify-between text-xs animate-in fade-in duration-150">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs animate-in fade-in duration-150">
                   <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
                     <div>
-                      <span className="font-semibold text-white block">{resolvedStudent.fullName}</span>
-                      <span className="text-[11px] text-slate-400 font-mono">
+                      <span className="font-semibold text-slate-900 block">{resolvedStudent.fullName}</span>
+                      <span className="text-[11px] text-slate-600 font-mono">
                         {resolvedStudent.matricNo && resolvedStudent.matricNo !== 'NULL'
                           ? resolvedStudent.matricNo
                           : resolvedStudent.department}
                       </span>
                     </div>
                   </div>
-                  <span className="text-[11px] text-emerald-400 font-mono">
+                  <span className="text-[11px] text-blue-600 font-mono font-semibold">
                     Accredited
                   </span>
                 </div>
@@ -437,12 +437,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
 
               {/* Directory Finder Link */}
               {onGoToDirectory && (
-                <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400">
+                <div className="pt-1 flex items-center justify-between text-[11px] text-slate-500">
                   <span>Need to confirm your registered number?</span>
                   <button
                     type="button"
                     onClick={onGoToDirectory}
-                    className="text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer transition-colors"
+                    className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer transition-colors"
                   >
                     View Student Directory →
                   </button>
@@ -453,8 +453,8 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             {/* 4-Digit Live Passcode Field */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-blue-600" />
                   <span>Hall Passcode (4 Digits)</span>
                 </label>
                 <span className="text-[11px] text-slate-500 font-mono">
@@ -476,7 +476,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                     onChange={(e) => handleDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(idx, e)}
                     onPaste={idx === 0 ? handlePastePin : undefined}
-                    className="h-14 w-full min-w-0 text-center text-2xl font-mono font-bold rounded-xl bg-[#0B0F17] border border-white/[0.1] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-emerald-400 transition-all duration-150"
+                    className="h-14 w-full min-w-0 text-center text-2xl font-mono font-bold rounded-xl bg-white border-2 border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-blue-600 transition-all duration-150 shadow-xs"
                   />
                 ))}
               </div>
@@ -487,12 +487,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             </div>
 
             {/* Anti-Proxy Guard Footnote */}
-            <div className="p-3 bg-[#0B0F17] border border-white/[0.06] rounded-xl flex items-center justify-between text-xs text-slate-400">
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs text-slate-600">
               <div className="flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
+                <Smartphone className="w-4 h-4 text-blue-600 shrink-0" />
                 <span>Single device: 1 submission per hardware</span>
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
+              <div className="flex items-center gap-1 text-[11px] text-blue-600 font-mono font-medium">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Anti-Proxy Locked</span>
               </div>
@@ -502,7 +502,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !jambRegNo.trim() || pinDigits.some(d => !d)}
-              className="w-full h-12 rounded-xl text-white font-semibold text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600 active:scale-[0.98]"
+              className="w-full h-12 rounded-xl text-white font-semibold text-sm transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 disabled:hover:bg-blue-600"
             >
               {isSubmitting ? (
                 <>
@@ -524,12 +524,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
           <button
             type="button"
             onClick={onOpenAdminLogin}
-            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs transition-colors py-2 px-3 rounded-lg hover:bg-slate-900 cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-slate-600 hover:text-blue-600 text-xs transition-colors py-2 px-3 rounded-lg hover:bg-slate-50 cursor-pointer"
           >
-            <Lock className="w-3.5 h-3.5 text-slate-500" />
+            <Lock className="w-3.5 h-3.5 text-slate-400" />
             <span>Lecturer & Course Rep Login</span>
           </button>
-          <p className="text-[11px] text-slate-600 mt-0.5">
+          <p className="text-[11px] text-slate-500 mt-0.5">
             RUN CyberPass · Redeemer's University Faculty of Computing and Digital Technology
           </p>
         </div>
